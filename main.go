@@ -93,10 +93,10 @@ func WaitForConnection () {
 func handleRequest() {
 	for i := range connections {
 		if connections[i].isConnected {
-			fmt.Println("ping to connection")
+			//fmt.Println("ping to connection")
 			
 			// Send a response back to person contacting us.
-			_, err := connections[i].conn.Write([]byte("ping"))
+			_, err := connections[i].conn.Write([]byte(""))
 			
 			if err != nil {
 				connections [i].isConnected = false

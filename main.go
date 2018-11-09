@@ -7,6 +7,8 @@ import (
     "net"
     "os"
 	"time"
+	"encoding/json"
+	"strings"
 )
 
 ///TCP Listener
@@ -61,7 +63,7 @@ func main() {
 	
 	listener = r
 	
-    fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
+	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
 
 	second := time.Tick(time.Second)
 	millisecond := time.Tick(time.Millisecond)
@@ -93,14 +95,12 @@ func WaitForConnection () {
 func handleRequest() {
 	for i := range connections {
 		if connections[i].isConnected {
-			//fmt.Println("ping to connection")
-			
-			// Send a response back to person contacting us.
-			_, err := connections[i].conn.Write([]byte(""))
+			// Ping the connection.
+			_, err := connections[i].conn.Write([]byte("->ping"))
 			
 			if err != nil {
 				connections [i].isConnected = false
-				fmt.Println("Client disconnected", connections [i].isConnected)
+				fmt.Println("Client disconnected")
 				continue
 			}
 		}
@@ -117,10 +117,10 @@ func handleMessages () {
 
 				if error == nil {
 					var incoming string = string(buf[:length])
-					fmt.Println("incoming data: ", incoming) 
 					//fmt.Println("sender's lobby: ", connections[i].lobby)
-					go sendMessage (&connections[i], "mesajini aldim kankey")
+					//go sendMessage (&connections[i], "mesajini aldim kankey")
 					// TODO: Relay the message to all lobby members
+					ProcessData (incoming, &connections[i])
 				}
 		}
 	}			
@@ -130,4 +130,40 @@ func handleMessages () {
 func sendMessage (conn *connection, msg string) {
 		// Send a response back to person contacting us.
 		conn.conn.Write([]byte(msg))
+}
+
+/// Base network message
+type NetworkMessage struct {
+	Purpose int `json:"t,omitempty"` // Message Purpose=> 0=CreateLobby, 1=JoinLobby, 2=RequestLobbies, 4=RelayToLobby
+	CreateLobby CreateLobby `json:"cl,omitempty"` // Create lobby data, if exist
+	JoinLobby JoinLobby `json:"jl,omitempty"` // Join lobby data, if exist
+	RequestLobbies RequestLobbies `json:"rl,omitempty"` // Request Lobbies data, if exist
+	RelayToLobby RelayToLobby `json:"m,omitempty"` // Relay To Lobby data, if exist
+} 
+
+type CreateLobby struct {
+	name string // Name of the lobby.
+}
+
+type JoinLobby struct {
+	index int // Index of the lobby.
+}
+
+type RelayToLobby struct {
+	data string // This will be relayed to lobby. 
+}
+
+type RequestLobbies struct {
+	page int // Page
+}
+
+///Process the incoming message, and relay the message to lobby if the connection is in a lobby.
+func ProcessData (data string, sender *connection) {
+	var netMessage NetworkMessage
+	if err := json.NewDecoder(strings.NewReader(data)).Decode(&netMessage); err != nil {
+			/// Message cannot be parsed.
+		return
+	}
+
+	//TODO Switch case via netMessage.Purpose
 }

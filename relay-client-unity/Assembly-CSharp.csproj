@@ -273,11 +273,11 @@
     <Reference Include="UnityEngine.SpatialTracking">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/UnitySpatialTracking/RuntimeEditor/UnityEngine.SpatialTracking.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>D:/github/go-relay-server/relay-client-unity/Assets/Plugins/Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="RelayClient">
       <HintPath>D:/github/go-relay-server/relay-client-unity/Assets/Plugins/RelayClient.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.Advertisements">
-      <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.ads@2.0.8/UnityEngine.Advertisements.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Analytics.Editor">
       <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.analytics@3.0.9/Unity.Analytics.Editor.dll</HintPath>

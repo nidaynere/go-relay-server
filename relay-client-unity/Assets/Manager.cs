@@ -14,12 +14,6 @@ public class Manager : MonoBehaviour
         Client.Connect(ip, port);
     }
 
-    [System.Serializable]
-    /// Base network message
-    public class NetworkMessage {
-        public int t; // Message Purpose=> 0=CreateLobby, 1=JoinLobby, 2=RequestLobbies, 4=RelayToLobby
-    }
-
     // Update is called once per frame
     void Update()
     {
@@ -32,7 +26,13 @@ public class Manager : MonoBehaviour
         //Test message send.
         if (Input.GetKeyDown(KeyCode.A))
         {
-            Client.Write(JsonUtility.ToJson(new NetworkMessage() { t = 1 } ));
+            Client.CreateLobby ("new lobby");
+        }
+
+        //Test message send.
+        if (Input.GetKeyDown(KeyCode.S))
+        {
+            Client.JoinLobby(0);
         }
     }
 

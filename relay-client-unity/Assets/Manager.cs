@@ -17,23 +17,32 @@ public class Manager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        string incomingMessage = Client.Read();
-        if (!string.IsNullOrEmpty(incomingMessage))
-        {
-            Debug.Log(incomingMessage);
-        }
-
-        //Test message send.
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            Client.CreateLobby ("new lobby");
-        }
+        Client.Update ();
 
         //Test message send.
         if (Input.GetKeyDown(KeyCode.S))
         {
-            Client.JoinLobby(0);
+            Methods.JoinLobby();
         }
+
+        //Test message send.
+        if (Input.GetKeyDown(KeyCode.D))
+        {
+            Methods.RelayToLobby("seks var");
+        }
+
+        MessagesIncoming.OnLobbyJoined = (bool b2) => { OnLobbyJoined(b2); };
+        MessagesIncoming.OnP2P = (string msg) => { OnP2P(msg); };
+    }
+
+    void OnLobbyJoined (bool b)
+    {
+        Debug.Log("OnLobbyCreated() isSuccess: " + b);
+    }
+
+    void OnP2P(string msg)
+    {
+        Debug.Log("Peer to peer message: " + msg);
     }
 
     private void OnDestroy()

@@ -31,7 +31,6 @@ type connection struct {
 ///Lobby
 type lobby struct {
 	Connections [8]*connection // A lobby can hold maximum 8 players.
-	Name string // Lobby name
 }
 
 /// ALL CONNECTIONS
@@ -155,14 +154,9 @@ func handleRequest() {
 		if Connections[i].IsConnected {
 			// Ping the connection.
 
-			var additional string
-			if Connections[i].Lobby != nil{
-				additional = " ,lobby is: " + Connections[i].Lobby.Name
-			}
-
-			_, err := Connections[i].Conn.Write([]byte("->ping" + additional))
+			var success bool = sendMessage (&Connections[i], OutgoingMessage{ Purpose : -1 })
 			
-			if err != nil {
+			if !success {
 				Connections [i].IsConnected = false
 				RemoveConnectionFromLobby (&Connections [i])
 				Connections[i].Lobby = nil;
@@ -193,39 +187,28 @@ func handleMessages () {
 }
 
 //usage: sendMessage (&connections[i], incoming) // send back the incoming message
-func sendMessage (conn *connection, msg string) {
+func sendMessage (conn *connection, msg OutgoingMessage) (bool) {
+	if conn.Conn == nil{
+		return false
+	}
+
+	e, err := json.Marshal(msg)
+    if err != nil {
+        return false
+    }
 		// Send a response back to person contacting us.
-		conn.Conn.Write([]byte(msg))
-}
+	_, error := conn.Conn.Write([]byte(e))
 
-/// Base network message
-type NetworkMessage struct {
-	Purpose int `json:"t,omitempty"` // Message Purpose=> 0=CreateLobby, 1=JoinLobby, 2=RequestLobbies, 4=RelayToLobby
-	CreateLobby _CreateLobby `json:"cl,omitempty"` // Create lobby data, if exist
-	JoinLobby _JoinLobby `json:"jl,omitempty"` // Join lobby data, if exist
-	RequestLobbies _RequestLobbies `json:"rl,omitempty"` // Request Lobbies data, if exist
-	RelayToLobby _RelayToLobby `json:"m,omitempty"` // Relay To Lobby data, if exist
-} 
+	if error != nil {
+		return false
+	}
 
-type _CreateLobby struct {
-	LobbyName string `json:"n,omitempty"` // Name of the lobby.
-}
-
-type _JoinLobby struct {
-	Index int `json:"i,omitempty"` // Index of the lobby.
-}
-
-type _RelayToLobby struct {
-	Msg string `json:"m,omitempty"` // This will be relayed to lobby. 
-}
-
-type _RequestLobbies struct {
-	Page int `json:"p,omitempty"`// Page
+	return true
 }
 
 ///Process the incoming message, and relay the message to lobby if the connection is in a lobby.
 func ProcessData (data string, sender *connection) {
-	var netMessage NetworkMessage
+	var netMessage IncomingMessage
 	if err := json.NewDecoder(strings.NewReader(data)).Decode(&netMessage); err != nil {
 			/// Message cannot be parsed.
 		return
@@ -233,66 +216,57 @@ func ProcessData (data string, sender *connection) {
 
 	fmt.Println ("incoming message purpose: ", netMessage.Purpose)
 
+	var outgoing OutgoingMessage = OutgoingMessage{}
+	outgoing.Purpose = netMessage.Purpose // Add the purpose
+
 	switch netMessage.Purpose {
-		case 0: // Create Lobby
+		case 0: // Join Lobby
+			outgoing.JoinLobby = _OnJoinLobby{ Success: false }
+			fmt.Println ("Join lobby request")
+
 			if sender.Lobby != nil{
-				fmt.Println ("Create lobby request: but already in a lobby. Leave it first.")
+				fmt.Println ("Join lobby request: but already in a lobby. Leave it first.")
+				sendMessage (sender, outgoing)
 				return;
 			}
 
-			fmt.Println ("CreateLobby with name: ", netMessage.CreateLobby.LobbyName)
-
-			targetLobby := -1
 			for i := range Lobbies {
-				if AnyPlayerInLobby (&Lobbies[i]) == false {	
-					targetLobby = i
+				if AnyPlayerInLobby (&Lobbies[i]){
+					joinable, index := GetLobbySlot (&Lobbies[i])
+					if !joinable {
+						continue
+					}else{
+						// Join this lobby.			
+						Lobbies[i].Connections[index] = sender
+						sender.Lobby = &Lobbies[i]
+						fmt.Println ("Joined.")
+						outgoing.JoinLobby.Success = true
+						break
+					}
+				}else{
+					// Create a lobby.
+					Lobbies[i].Connections[0] = sender
+					sender.Lobby = &Lobbies[i]
+					fmt.Println ("Created.")
+					outgoing.JoinLobby.Success = true
 					break
 				}
 			}
 
-			if targetLobby == -1{
-				sendMessage (sender, "Cannot create a lobby because server got maximum lobby:(")
-				return
+			sendMessage (sender, outgoing) // Send for callback.
+
+		case 1: // Relay to Lobby
+		
+		if sender.Lobby == nil{
+			return; // no lobby. no relay.
+		}
+
+		outgoing.RelayToLobby = _OnP2P { Msg : netMessage.RelayToLobby.Msg }
+
+		for e:=range sender.Lobby.Connections {
+			if sender.Lobby.Connections[e] != nil{
+				sendMessage (sender.Lobby.Connections[e], outgoing)
 			}
-
-			Lobbies[targetLobby].Name = netMessage.CreateLobby.LobbyName
-			Lobbies[targetLobby].Connections[0] = sender
-			sender.Lobby = &Lobbies[targetLobby]
-
-			sendMessage (sender, "Lobby created succesfully with name: " + sender.Lobby.Name)
-
-		case 1: // Join Lobby
-			if sender.Lobby != nil{
-				fmt.Println ("Join lobby request: but already in a lobby. Leave it first.")
-				return;
-			}
-
-			fmt.Println ("Join lobby request: ", netMessage.JoinLobby.Index)
-
-			var tLobby lobby = Lobbies[netMessage.JoinLobby.Index]
-
-			if AnyPlayerInLobby (&tLobby) == false {
-				sendMessage (sender, "Lobby is not found.")
-				fmt.Println ("Lobby is not found. ", netMessage.JoinLobby.Index)
-				return
-			}
-
-			joinable, index := GetLobbySlot (&tLobby)
-			if !joinable {
-				sendMessage (sender, "Lobby is full")
-				fmt.Println ("Lobby is full ", netMessage.JoinLobby.Index)
-				return
-			}
-			
-			tLobby.Connections[index] = sender
-			sender.Lobby = &tLobby
-
-			sendMessage (sender, "Successfully joined to lobby " + tLobby.Name)
-		case 2: // Request Lobbies
-			if sender.Lobby != nil{
-				fmt.Println ("Request lobby request: but already in a lobby. Leave it first.")
-				return;
-			}
-		case 3: // Relay to Lobby
+		}
 	}
 }

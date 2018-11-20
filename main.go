@@ -14,6 +14,8 @@ import (
 ///TCP Listener
 var listener net.Listener = nil
 
+var Id = 1000
+
 ///Server connection info
 const (
     CONN_HOST = "localhost"
@@ -26,6 +28,7 @@ type connection struct {
 	Conn net.Conn
 	IsConnected bool
 	Lobby *lobby // index of the registered lobby.
+	Id int
 }
 
 ///Lobby
@@ -88,6 +91,7 @@ func addconnection (newconnection net.Conn) {
 		if !Connections[i].IsConnected {
 			Connections[i].Conn = newconnection
 			Connections[i].IsConnected = true
+			Connections[i].Id, Id = Id, Id+1
 			fmt.Println ("Client connected")
 			return
 		}
@@ -248,6 +252,7 @@ func ProcessData (data string, sender *connection) {
 					Lobbies[i].Connections[0] = sender
 					sender.Lobby = &Lobbies[i]
 					fmt.Println ("Created.")
+					outgoing.JoinLobby.Id = sender.Id
 					outgoing.JoinLobby.Success = true
 					break
 				}
@@ -261,7 +266,7 @@ func ProcessData (data string, sender *connection) {
 			return; // no lobby. no relay.
 		}
 
-		outgoing.RelayToLobby = _OnP2P { Msg : netMessage.RelayToLobby.Msg }
+		outgoing.RelayToLobby = _OnP2P { Msg : netMessage.RelayToLobby.Msg, Sender: sender.Id }
 
 		for e:=range sender.Lobby.Connections {
 			if sender.Lobby.Connections[e] != nil{

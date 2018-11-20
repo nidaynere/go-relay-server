@@ -45,6 +45,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Client.cs" />
+    <Compile Include="JsonExtensions.cs" />
     <Compile Include="MessagesIncoming.cs" />
     <Compile Include="Methods.cs" />
     <Compile Include="MessagesOutgoing.cs" />

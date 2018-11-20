@@ -9,10 +9,11 @@ namespace RelayClient
     public class MessagesIncoming
     {
         #region actions
-            public static Action<bool> OnLobbyJoined;
+            public static Action OnConnectionClosed;
+            public static Action<bool, int> OnLobbyJoined;
             public static Action<int> OnLobbyUpdate;
             public static Action OnLobbyLeave;
-            public static Action<string> OnP2P;
+            public static Action<string, int> OnP2P;
         #endregion
 
         /// <summary>
@@ -34,15 +35,9 @@ namespace RelayClient
             public _LobbyUpdate lu;
         }
 
-        public class _CreateLobby
-        {
-            public string Name;
-            public bool Success;
-        }
-
         public class _JoinLobby
         {
-            public string Name;
+            public int Id;
             public bool Success;
         }
 
@@ -53,6 +48,10 @@ namespace RelayClient
 
         public class _P2P
         {
+            /// <summary>
+            /// Sender
+            /// </summary>
+            public int s;
             public string Msg;
         }
     }

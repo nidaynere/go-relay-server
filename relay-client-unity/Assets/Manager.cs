@@ -31,18 +31,18 @@ public class Manager : MonoBehaviour
             Methods.RelayToLobby("seks var");
         }
 
-        MessagesIncoming.OnLobbyJoined = (bool b2) => { OnLobbyJoined(b2); };
-        MessagesIncoming.OnP2P = (string msg) => { OnP2P(msg); };
+        MessagesIncoming.OnLobbyJoined = (bool b2, int id) => { OnLobbyJoined(b2, id); };
+        MessagesIncoming.OnP2P = (string msg, int sender) => { OnP2P(msg, sender); };
     }
 
-    void OnLobbyJoined (bool b)
+    void OnLobbyJoined (bool b, int id)
     {
-        Debug.Log("OnLobbyCreated() isSuccess: " + b);
+        Debug.Log("OnLobbyCreated() isSuccess: " + b + " User Id: " + id);
     }
 
-    void OnP2P(string msg)
+    void OnP2P(string msg, int sender)
     {
-        Debug.Log("Peer to peer message: " + msg);
+        Debug.Log("Peer to peer message: " + msg + " sender: " + sender);
     }
 
     private void OnDestroy()

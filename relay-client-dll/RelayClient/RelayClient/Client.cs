@@ -21,6 +21,9 @@ namespace RelayClient
         /// </summary>
         public static void Connect(string ip, int port) {
             client = new TcpClient();
+            client.ReceiveBufferSize = 1024;
+            client.SendBufferSize = 1024;
+            client.SendTimeout = 2;
             client.Connect(ip, port);
             client.NoDelay = true;
         }
@@ -32,6 +35,7 @@ namespace RelayClient
             if (client != null && client.Connected)
             {
                 client.Close();
+                MessagesIncoming.OnConnectionClosed?.Invoke();
             }
         }
 
@@ -69,26 +73,29 @@ namespace RelayClient
             string Msg = Read();
             if (!string.IsNullOrEmpty(Msg))
             {
-                    MessagesIncoming.NetworkMessage message = JsonConvert.DeserializeObject<MessagesIncoming.NetworkMessage>(Msg);
+                var list = JsonExtensions.FromDelimitedJson<MessagesIncoming.NetworkMessage>(new StringReader(Msg)).ToList();
 
+                foreach (MessagesIncoming.NetworkMessage message in list)
+                {
                     switch (message.t)
                     {
                         case MessagesIncoming.MessageType.JoinLobby:
-                            MessagesIncoming.OnLobbyJoined(message.jl.Success);
+                            MessagesIncoming.OnLobbyJoined?.Invoke(message.jl.Success, message.jl.Id);
                             break;
 
                         case MessagesIncoming.MessageType.P2P:
-                            MessagesIncoming.OnP2P(message.m.Msg);
+                            MessagesIncoming.OnP2P?.Invoke(message.m.Msg, message.m.s);
                             break;
 
                         case MessagesIncoming.MessageType.LobbyUpdate:
-                            MessagesIncoming.OnLobbyUpdate(message.lu.Members);
+                            MessagesIncoming.OnLobbyUpdate?.Invoke(message.lu.Members);
                             break;
 
                         case MessagesIncoming.MessageType.LobbyLeave:
-                            MessagesIncoming.OnLobbyLeave();
+                            MessagesIncoming.OnLobbyLeave?.Invoke();
                             break;
                     }
+                }
             }
         }
 
@@ -96,7 +103,8 @@ namespace RelayClient
         /// Sends message to relay server. But this method cannot be called outside of this API.
         /// </summary>
         /// <param name="str"></param>
-        public static void Write (String str) {
+        public static void Write (String str)
+        {
             if (!client.Connected)
                 return;
 

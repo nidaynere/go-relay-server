@@ -9,10 +9,12 @@ type OutgoingMessage struct {
 } 
 
 type _OnJoinLobby struct {
+	Id int // User id.
 	Success bool  // Success
 }
 
 type _OnP2P struct {
+	Sender int `json:"s,omitempty"` // Sender, 0= host.
 	Msg string
 }
 

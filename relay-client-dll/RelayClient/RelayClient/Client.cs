@@ -9,7 +9,10 @@ using Newtonsoft.Json;
 
 namespace RelayClient
 {
-    public class Client
+    /// <summary>
+    /// Initilization class of Relay.
+    /// </summary>
+    public class Main
     {
         /// <summary>
         /// TCP Client
@@ -24,6 +27,7 @@ namespace RelayClient
             client.ReceiveBufferSize = 1024;
             client.SendBufferSize = 1024;
             client.SendTimeout = 2;
+            client.ReceiveTimeout = 2;
             client.Connect(ip, port);
             client.NoDelay = true;
         }
@@ -35,7 +39,7 @@ namespace RelayClient
             if (client != null && client.Connected)
             {
                 client.Close();
-                MessagesIncoming.OnConnectionClosed?.Invoke();
+                Client.MessagesIncoming.OnConnectionClosed?.Invoke();
             }
         }
 
@@ -73,26 +77,54 @@ namespace RelayClient
             string Msg = Read();
             if (!string.IsNullOrEmpty(Msg))
             {
-                var list = JsonExtensions.FromDelimitedJson<MessagesIncoming.NetworkMessage>(new StringReader(Msg)).ToList();
+                var list = JsonExtensions.FromDelimitedJson<Client.MessagesIncoming.NetworkMessage>(new StringReader(Msg)).ToList();
 
-                foreach (MessagesIncoming.NetworkMessage message in list)
+                foreach (Client.MessagesIncoming.NetworkMessage message in list)
                 {
                     switch (message.t)
                     {
-                        case MessagesIncoming.MessageType.JoinLobby:
-                            MessagesIncoming.OnLobbyJoined?.Invoke(message.jl.Success, message.jl.Id);
+                        case Client.MessagesIncoming.MessageType.JoinLobby:
+                            Client.MessagesIncoming.OnLobbyJoined?.Invoke(message.jl.Success, message.jl.Id);
+
+                            Client.NetworkVariables.ConnectionId = message.jl.Id;
                             break;
 
-                        case MessagesIncoming.MessageType.P2P:
-                            MessagesIncoming.OnP2P?.Invoke(message.m.Msg, message.m.s);
+                        case Client.MessagesIncoming.MessageType.P2P:
+                            Client.MessagesIncoming.OnP2P?.Invoke(message.m.Msg, message.m.s); // Available for custom methods.
+
+                            try
+                            {
+                                Network.Identity identity = JsonConvert.DeserializeObject<Network.Identity>(message.m.Msg);
+
+                                if (identity.netType == Network.Identity.NetworkType.Request)
+                                { // Host assigns an id here.
+                                    identity.Id = Network.Identity.IdCounter++;
+                                    identity.netType = Network.Identity.NetworkType.Post;
+                                    identity.Spawn();
+                                }
+                                else
+                                {
+                                    //This is a post.
+                                    Network.Actions.OnIdentityUpdate?.Invoke(identity);
+                                    identity.OnSpawned();
+                                }
+                            }
+                            catch (System.Exception e){
+                                Network.Actions.OnError?.Invoke(e.ToString ());
+                            }
+
+
                             break;
 
-                        case MessagesIncoming.MessageType.LobbyUpdate:
-                            MessagesIncoming.OnLobbyUpdate?.Invoke(message.lu.Members);
+                        case Client.MessagesIncoming.MessageType.LobbyUpdate:
+                            Client.MessagesIncoming.OnLobbyUpdate?.Invoke(message.lu.IsHost);
+
+                            // Lobby update
+                            Client.NetworkVariables.IsHost = message.lu.IsHost;
                             break;
 
-                        case MessagesIncoming.MessageType.LobbyLeave:
-                            MessagesIncoming.OnLobbyLeave?.Invoke();
+                        case Client.MessagesIncoming.MessageType.LobbyLeave:
+                            Client.MessagesIncoming.OnLobbyLeave?.Invoke();
                             break;
                     }
                 }

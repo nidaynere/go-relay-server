@@ -49,7 +49,10 @@
     <Compile Include="MessagesIncoming.cs" />
     <Compile Include="Methods.cs" />
     <Compile Include="MessagesOutgoing.cs" />
+    <Compile Include="Network.cs" />
+    <Compile Include="NetworkVariables.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Transform.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -7,24 +7,36 @@ using Newtonsoft.Json;
 
 namespace RelayClient
 {
-    public static class Methods
+    namespace Client
     {
-        /// <summary>
-        /// Join this to join a lobby.
-        /// </summary>
-        /// <param name="lobbyIndex">Target lobby index</param>
-        public static void JoinLobby()
+        public static class Methods
         {
-            Client.Write(JsonConvert.SerializeObject(new MessagesOutgoing.NetworkMessage( MessagesOutgoing.MessageType.JoinLobby)));
-        }
+            /// <summary>
+            /// Join this to join a lobby.
+            /// </summary>
+            /// <param name="lobbyIndex">Target lobby index</param>
+            public static void JoinLobby()
+            {
+                Main.Write(JsonConvert.SerializeObject(new MessagesOutgoing.NetworkMessage(MessagesOutgoing.MessageType.JoinLobby)));
+            }
 
-        /// <summary>
-        /// Relay the message to lobby.
-        /// </summary>
-        /// <param name="message"></param>
-        public static void RelayToLobby(string message)
-        {
-            Client.Write(JsonConvert.SerializeObject(new MessagesOutgoing.NetworkMessage(new MessagesOutgoing._RelayToLobby(message))));
+            /// <summary>
+            /// Relay the message to lobby.
+            /// </summary>
+            /// <param name="message">Json string</param>
+            public static void RelayToLobby(string message)
+            {
+                Main.Write(JsonConvert.SerializeObject(new MessagesOutgoing.NetworkMessage(new MessagesOutgoing._RelayToLobby(message))));
+            }
+
+            /// <summary>
+            /// Relay the object to lobby.
+            /// </summary>
+            /// <param name="Object">Object to json</param>
+            public static void RelayToLobby (object Object)
+            {
+                RelayToLobby (JsonConvert.SerializeObject(Object));
+            }
         }
     }
 }

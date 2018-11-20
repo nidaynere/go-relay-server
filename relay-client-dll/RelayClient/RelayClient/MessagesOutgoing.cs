@@ -6,40 +6,42 @@ using System.Threading.Tasks;
 
 namespace RelayClient
 {
-    class MessagesOutgoing
+    namespace Client
     {
-        /// <summary>
-        /// Network message types.
-        /// </summary>
-        public enum MessageType
+        class MessagesOutgoing
         {
-            JoinLobby,
-            RelayToLobby
-        }
-
-        public class NetworkMessage
-        {
-            public MessageType t;
-            public _RelayToLobby m;
-
-
-            public NetworkMessage(MessageType Purpose)
+            /// <summary>
+            /// Network message types.
+            /// </summary>
+            public enum MessageType
             {
-                t = Purpose;
+                JoinLobby,
+                RelayToLobby
             }
 
-            public NetworkMessage(_RelayToLobby message)
+            public class NetworkMessage
             {
-                t = MessageType.RelayToLobby;
-                m = message;
+                public MessageType t;
+                public _RelayToLobby m;
+
+                public NetworkMessage(MessageType Purpose)
+                {
+                    t = Purpose;
+                }
+
+                public NetworkMessage(_RelayToLobby message)
+                {
+                    t = MessageType.RelayToLobby;
+                    m = message;
+                }
             }
-        }
 
-        public class _RelayToLobby
-        {
-            public string m;
+            public class _RelayToLobby
+            {
+                public string m;
 
-            public _RelayToLobby(string message) { m = message; }
+                public _RelayToLobby(string message) { m = message; }
+            }
         }
     }
 }

@@ -34,6 +34,32 @@ type connection struct {
 ///Lobby
 type lobby struct {
 	Connections [8]*connection // A lobby can hold maximum 8 players.
+	Host int // Host index
+}
+
+func LobbyUpdate (Lobby *lobby){
+	var outgoing = OutgoingMessage { Purpose : 2 }
+	outgoing.LobbyUpdate = _OnLobbyUpdate {}
+
+	var NeedHost = false
+	if Lobby.Host == -1 || !Lobby.Connections[Lobby.Host].IsConnected {
+		// Need new host.
+		NeedHost = true
+	}
+
+	for e:=range Lobby.Connections {
+		if Lobby.Connections[e] != nil {
+			if Lobby.Connections[e].IsConnected{
+				if NeedHost{
+					Lobby.Host = e // New host assigned.
+					NeedHost = false
+				}
+				
+				outgoing.LobbyUpdate.IsHost = e == Lobby.Host
+				sendMessage (Lobby.Connections[e], outgoing)
+			}
+		}
+	}
 }
 
 /// ALL CONNECTIONS
@@ -65,6 +91,8 @@ func RemoveConnectionFromLobby (Connection *connection) {
 			var dCon connection
 			Connection.Lobby.Connections[i] = &dCon
 			fmt.Println ("Connection removed from lobby")
+			
+			LobbyUpdate (Connection.Lobby)
 		}
 	}
 }
@@ -254,6 +282,7 @@ func ProcessData (data string, sender *connection) {
 					fmt.Println ("Created.")
 					outgoing.JoinLobby.Id = sender.Id
 					outgoing.JoinLobby.Success = true
+					LobbyUpdate (&Lobbies[i])
 					break
 				}
 			}
@@ -269,7 +298,7 @@ func ProcessData (data string, sender *connection) {
 		outgoing.RelayToLobby = _OnP2P { Msg : netMessage.RelayToLobby.Msg, Sender: sender.Id }
 
 		for e:=range sender.Lobby.Connections {
-			if sender.Lobby.Connections[e] != nil{
+			if sender.Lobby.Connections[e] != nil && sender.Lobby.Connections[e].IsConnected {
 				sendMessage (sender.Lobby.Connections[e], outgoing)
 			}
 		}

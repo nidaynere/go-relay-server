@@ -14,18 +14,21 @@ public class Manager : MonoBehaviour
         Main.Connect(ip, port);
         RelayClient.Client.MessagesIncoming.OnLobbyJoined = (bool Success, int Id) => { Debug.Log("OnLobbyJoined: " + Success + " Id:"+Id); };
         RelayClient.Client.MessagesIncoming.OnLobbyUpdate = (bool IsHost) => { Debug.Log("OnLobbyUpdate-> IsHost:" + IsHost); };
-        RelayClient.Network.Actions.OnIdentityUpdate = (RelayClient.Network.Identity Identity) => 
+        RelayClient.Network.Actions.OnIdentityUpdate = (RelayClient.Network.Identity _Identity) =>
         {
-            Debug.Log("OnIdentityUpdate->"+ Identity.Asset + ", Total Identity:  "+RelayClient.Network.Identity.List.Count);
-            if (!RelayClient.Network.Identity.List.Contains(Identity))
+            NetworkObject networkObject = NetworkObject.List.Find(x => x.Id == _Identity.Id);
+            if (networkObject == null)
             {
-                Debug.Log("Spawn Identity()");
-                GameObject Asset = Resources.Load<GameObject>(Identity.Asset);
+                Debug.Log("Spawn Identity(): " + _Identity.i);
+                GameObject Asset = Resources.Load<GameObject>(_Identity.Asset);
                 Asset = Instantiate(Asset);
-                Asset.AddComponent<NetworkObject>().Identity = Identity;
+                networkObject = Asset.AddComponent<NetworkObject>();
+                networkObject.Id = _Identity.Id;
+                networkObject.Sync(true); 
             }
         };
-        RelayClient.Client.MessagesIncoming.OnP2P = (string Message, int Sender) => { Debug.Log("Message: " + Message + ", Sender: " + Sender); };
+
+        //RelayClient.Client.MessagesIncoming.OnP2P = (string Message, int Sender) => { Debug.Log("Message: " + Message + ", Sender: " + Sender); };
         RelayClient.Network.Actions.OnError = (string Error) => { Debug.Log(Error); };
     }
 
@@ -33,39 +36,33 @@ public class Manager : MonoBehaviour
     void Update()
     {
         Main.Update ();
+    }
 
-        //Test message send.
-        if (Input.GetKeyDown(KeyCode.S))
+    void OnGUI()
+    {
+        if (GUI.Button(new Rect(0, 0, 100, 20), "JoinLobby"))
         {
             RelayClient.Client.Methods.JoinLobby();
         }
 
-        if (Input.GetKeyDown(KeyCode.D))
+        if (GUI.Button(new Rect(0, 50, 100, 20), "Spawnplayer"))
         {
-            RelayClient.Network.Spawner.Spawn("Cube", new float[3] { 1, 1, 1 }, new float[3] { 2, 2, 2 });
+            RelayClient.Network.Spawner.SpawnPlayer("Cube", NetworkObject.VectorToFloat (new Vector3 (0,0,1)), NetworkObject.VectorToFloat(new Vector3(0, 0, 45)));
         }
-        /*
-        //Test message send.
-        if (Input.GetKeyDown(KeyCode.D))
+    }
+
+    float nextUpdate = 0;
+    /// <summary>
+    /// Network update at late update.
+    /// </summary>
+    private void LateUpdate()
+    {
+        if (nextUpdate < Time.time)
         {
-            RelayClient.Client.Methods.RelayToLobby("seks var");
-        }*/
-
-
-
-        //MessagesIncoming.OnLobbyJoined = (bool b2, int id) => { OnLobbyJoined(b2, id); };
-        //essagesIncoming.OnP2P = (string msg, int sender) => { OnP2P(msg, sender); };
+            nextUpdate = Time.time + 0.2f; // 5 times in a second.
+            RelayClient.Network.Identity.Update();
+        }
     }
-    /*
-    void OnLobbyJoined (bool b, int id)
-    {
-        Debug.Log("OnLobbyCreated() isSuccess: " + b + " User Id: " + id);
-    }
-
-    void OnP2P(string msg, int sender)
-    {
-        Debug.Log("Peer to peer message: " + msg + " sender: " + sender);
-    }*/
 
     private void OnDestroy()
     {

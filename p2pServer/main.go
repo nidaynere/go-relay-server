@@ -89,6 +89,7 @@ func RemoveConnectionFromLobby (Connection *connection) {
 	for i := range Connection.Lobby.Connections {
 		if Connection.Lobby.Connections[i] == Connection {
 			var dCon connection
+			dCon.IsConnected = false
 			Connection.Lobby.Connections[i] = &dCon
 			fmt.Println ("Connection removed from lobby")
 			
@@ -119,8 +120,9 @@ func addconnection (newconnection net.Conn) {
 		if !Connections[i].IsConnected {
 			Connections[i].Conn = newconnection
 			Connections[i].IsConnected = true
-			Connections[i].Id, Id = Id, Id+1
-			fmt.Println ("Client connected")
+			Connections[i].Id = Id
+			Id = Id + 1
+			fmt.Println ("Client connected", Connections[i].Id)
 			return
 		}
 	}
@@ -160,7 +162,7 @@ func main() {
         select {
         case <-second:
 			go WaitForConnection()
-			go handleRequest()
+			go handleRequests()
 		case <-millisecond:
 			go handleMessages()
 		}
@@ -181,45 +183,65 @@ func WaitForConnection () {
 }
 
 // Handles the connections. Pings them every one second
-func handleRequest() {
+func handleRequests() {
 	for i := range Connections {
 		if Connections[i].IsConnected {
-			// Ping the connection.
-
-			var success bool = sendMessage (&Connections[i], OutgoingMessage{ Purpose : -1 })
-			
-			if !success {
-				Connections [i].IsConnected = false
-				RemoveConnectionFromLobby (&Connections [i])
-				Connections[i].Lobby = nil;
-				fmt.Println("Client disconnected")
-				continue
-			}
+			go handleRequest (&Connections[i])
 		}
+	}
+}
+
+func handleRequest (conn *connection){
+	// Ping the connection.
+	if conn.Conn == nil || !conn.IsConnected {
+		return
+	}
+
+	var msg OutgoingMessage = OutgoingMessage{ Purpose : -1 }
+	var success bool = send (conn, &msg)
+			
+	if !success {
+		conn.IsConnected = false
+		RemoveConnectionFromLobby (conn)
+		conn.Lobby = nil;
+		fmt.Println("Client disconnected")
 	}
 }
 
 func handleMessages () {
 	for i := range Connections {
 		if Connections[i].IsConnected {
-				//Make a buffer to hold incoming data.
-				buf := make([]byte, 1024)
-				//Read the incoming connection into the buffer.
-				length, error := Connections[i].Conn.Read(buf)
-
-				if error == nil {
-					var incoming string = string(buf[:length])
-					//fmt.Println("sender's lobby: ", connections[i].lobby)
-					//go sendMessage (&connections[i], "mesajini aldim kankey")
-					// TODO: Relay the message to all lobby members
-					ProcessData (incoming, &Connections[i])
-				}
+			go handleMessage (&Connections[i])
 		}
-	}			
+	}
+}
+
+func handleMessage (conn *connection) {
+	if conn.Conn == nil || !conn.IsConnected {
+		return
+	}
+
+	//Make a buffer to hold incoming data.
+	buf := make([]byte, 65535)
+	//Read the incoming connection into the buffer.
+	length, error := conn.Conn.Read(buf)
+
+	if error == nil {
+		var incoming string = string(buf[:length])
+		//fmt.Println("sender's lobby: ", connections[i].lobby)
+		//go sendMessage (&connections[i], "mesajini aldim kankey")
+		// TODO: Relay the message to all lobby members
+		ProcessData (incoming, conn)
+	}
 }
 
 //usage: sendMessage (&connections[i], incoming) // send back the incoming message
-func sendMessage (conn *connection, msg OutgoingMessage) (bool) {
+func sendMessage (conn *connection, msg OutgoingMessage) {
+
+	go send (conn, &msg)
+}
+
+func send (conn *connection, msg *OutgoingMessage) (bool) {
 	if conn.Conn == nil{
 		return false
 	}
@@ -247,6 +269,7 @@ func ProcessData (data string, sender *connection) {
 	}
 
 	fmt.Println ("incoming message purpose: ", netMessage.Purpose)
+	fmt.Println ("sender id: ", sender.Id)
 
 	var outgoing OutgoingMessage = OutgoingMessage{}
 	outgoing.Purpose = netMessage.Purpose // Add the purpose
@@ -280,15 +303,14 @@ func ProcessData (data string, sender *connection) {
 					Lobbies[i].Connections[0] = sender
 					sender.Lobby = &Lobbies[i]
 					fmt.Println ("Created.")
-					outgoing.JoinLobby.Id = sender.Id
 					outgoing.JoinLobby.Success = true
 					LobbyUpdate (&Lobbies[i])
 					break
 				}
 			}
 
+			outgoing.JoinLobby.Id = sender.Id
 			sendMessage (sender, outgoing) // Send for callback.
-
 		case 1: // Relay to Lobby
 		
 		if sender.Lobby == nil{

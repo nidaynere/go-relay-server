@@ -8,7 +8,7 @@ namespace RelayClient
 {
     namespace Client
     {
-        class NetworkVariables
+        public class NetworkVariables
         {
             /// <summary>
             /// Our connection ID.

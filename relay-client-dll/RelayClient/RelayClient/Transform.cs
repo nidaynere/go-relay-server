@@ -80,7 +80,7 @@ namespace RelayClient
                 for (int i = 0; i < 3; i++)
                     Decimal(ref ang[i]);
 
-                RX = ang[0]; PY = ang[1]; PZ = ang[2];
+                RX = ang[0]; RY = ang[1]; RZ = ang[2];
             }
         }
     }

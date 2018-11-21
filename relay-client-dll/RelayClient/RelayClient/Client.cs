@@ -17,19 +17,19 @@ namespace RelayClient
         /// <summary>
         /// TCP Client
         /// </summary>
-        private static TcpClient client;
+        public static TcpClient client;
 
         /// <summary>
         /// Connect to a relay server.
         /// </summary>
         public static void Connect(string ip, int port) {
             client = new TcpClient();
-            client.ReceiveBufferSize = 1024;
-            client.SendBufferSize = 1024;
-            client.SendTimeout = 2;
-            client.ReceiveTimeout = 2;
+            client.ReceiveBufferSize = 128000;
+            client.SendBufferSize = 128000;
+            client.SendTimeout = 5;
+            client.ReceiveTimeout = 5;
             client.Connect(ip, port);
-            client.NoDelay = true;
+            //client.NoDelay = true;
         }
 
         /// <summary>
@@ -74,6 +74,9 @@ namespace RelayClient
         /// </summary>
         public static void Update()
         {
+            if (!client.Connected)
+                return;
+
             string Msg = Read();
             if (!string.IsNullOrEmpty(Msg))
             {
@@ -85,7 +88,6 @@ namespace RelayClient
                     {
                         case Client.MessagesIncoming.MessageType.JoinLobby:
                             Client.MessagesIncoming.OnLobbyJoined?.Invoke(message.jl.Success, message.jl.Id);
-
                             Client.NetworkVariables.ConnectionId = message.jl.Id;
                             break;
 
@@ -105,14 +107,13 @@ namespace RelayClient
                                 else
                                 {
                                     //This is a post.
-                                    Network.Actions.OnIdentityUpdate?.Invoke(identity);
                                     identity.OnSpawned();
+                                    Network.Actions.OnIdentityUpdate?.Invoke(identity);
                                 }
                             }
-                            catch (System.Exception e){
-                                Network.Actions.OnError?.Invoke(e.ToString ());
-                            }
+                            catch {
 
+                            }
 
                             break;
 

@@ -13,7 +13,7 @@ namespace RelayClient
             #region actions
             public static Action OnConnectionClosed;
             public static Action<bool, int> OnLobbyJoined;
-            public static Action<bool> OnLobbyUpdate;
+            public static Action<bool, int, int> OnLobbyUpdate;
             public static Action OnLobbyLeave;
             public static Action<string, int> OnP2P;
             #endregion
@@ -45,7 +45,20 @@ namespace RelayClient
 
             public class _LobbyUpdate
             {
+                /// <summary>
+                /// Our client's host status. False if we are not the master of the lobby.
+                /// </summary>
                 public bool IsHost;
+
+                /// <summary>
+                /// Any connection is disconnected?, 0 if no disconnection.
+                /// </summary>
+                public int DC;
+
+                /// <summary>
+                /// New connection?
+                /// </summary>
+                public int C;
             }
 
             public class _P2P

@@ -12,13 +12,6 @@ namespace RelayClient
 {
     namespace Network
     {
-        //Generic variable, Only string accepted.
-        public class Variable
-        {
-            public string Id;
-            public string Value;
-        }
-
         public class Actions
         {
             public static Action<Identity> OnIdentityUpdate;
@@ -143,60 +136,16 @@ namespace RelayClient
 
             #region Json Variables
             public string p; // AssetName;
-            public Client.Transform t; // Transform of the object;
             public int i; // Id;
             #endregion
 
             /// <summary>
             /// Variables like animator values, health, damage, speed etc. Store anything in this.
             /// </summary>
-            public List<Variable> Variables = new List<Variable>();
-
-            /// <summary>
-            /// Add/Set variable to variables.
-            /// </summary>
-            /// <param name="_Id"></param>
-            /// <param name="_Value"></param>
-            public void SetVariable(string _Id, string _Value) {
-                Variable current = Variables.Find(x => x.Id == _Id);
-                if (current == null)
-                {
-                    current = new Variable() { Id = _Id };
-                    Variables.Add(current);
-                }
-
-                current.Value = _Value;
-            }
-
-            /// <summary>
-            /// Returns a variable from variables.
-            /// </summary>
-            /// <param name="_Id"></param>
-            /// <returns></returns>
-            public string GetVariable(string _Id)
-            {
-                Variable current = Variables.Find(x => x.Id == _Id);
-                if (current != null)
-                    return current.Value;
-
-                return "0";
-            }
-
-            /// <summary>
-            /// Remove a variable.
-            /// </summary>
-            /// <param name="_Id"></param>
-            public void RemoveVariable(string _Id)
-            {
-                Variable current = Variables.Find(x => x.Id == _Id);
-                if (current != null)
-                    Variables.Remove(current);
-            }
+            public Client.NetworkVariables.Variables Variables = new Client.NetworkVariables.Variables();
 
             [JsonIgnore]
             public string Asset { get { return p; } set { p = value; } }
-            [JsonIgnore]
-            public Client.Transform Transform { get { return t; } set { t = value; } }
             [JsonIgnore]
             public int Id { get { return i; } set { i = value; } }
 
@@ -209,7 +158,14 @@ namespace RelayClient
             public Identity(string _Asset, float[] _Position, float[] _Angles)
             {
                 Asset = _Asset;
-                Transform = new Client.Transform(_Position, _Angles);
+                Variables = new Client.NetworkVariables.Variables();
+                Variables.SetVariable("PositionX", _Position[0].ToString());
+                Variables.SetVariable("PositionY", _Position[1].ToString());
+                Variables.SetVariable("PositionZ", _Position[2].ToString());
+                Variables.SetVariable("AngleX", _Angles[0].ToString());
+                Variables.SetVariable("AngleY", _Angles[1].ToString());
+                Variables.SetVariable("AngleZ", _Angles[2].ToString());
+
             }
 
             /// <summary>
@@ -223,7 +179,13 @@ namespace RelayClient
             {
                 Id = _Id;
                 Asset = _Asset;
-                Transform = new Client.Transform(_Position, _Angles);
+
+                Variables.SetVariable("PositionX", _Position[0].ToString());
+                Variables.SetVariable("PositionY", _Position[1].ToString());
+                Variables.SetVariable("PositionZ", _Position[2].ToString());
+                Variables.SetVariable("AngleX", _Angles[0].ToString());
+                Variables.SetVariable("AngleY", _Angles[1].ToString());
+                Variables.SetVariable("AngleZ", _Angles[2].ToString());
             }
 
             /// <summary>

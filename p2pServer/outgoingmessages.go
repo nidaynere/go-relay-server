@@ -20,4 +20,6 @@ type _OnP2P struct {
 
 type _OnLobbyUpdate struct {
 	IsHost bool
+	DC int // Any connection is disconnected?, 0 if no disconnection.
+	C int // Anyone connected?
 }

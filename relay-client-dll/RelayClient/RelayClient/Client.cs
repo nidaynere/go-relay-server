@@ -20,16 +20,15 @@ namespace RelayClient
         public static TcpClient client;
 
         /// <summary>
-        /// Connect to a relay server.
+        /// Connect to the relay server
         /// </summary>
         public static void Connect(string ip, int port) {
             client = new TcpClient();
-            client.ReceiveBufferSize = 128000;
-            client.SendBufferSize = 128000;
+            client.ReceiveBufferSize = 65535;
+            client.SendBufferSize = 65535;
             client.SendTimeout = 5;
             client.ReceiveTimeout = 5;
             client.Connect(ip, port);
-            //client.NoDelay = true;
         }
 
         /// <summary>
@@ -118,10 +117,17 @@ namespace RelayClient
                             break;
 
                         case Client.MessagesIncoming.MessageType.LobbyUpdate:
-                            Client.MessagesIncoming.OnLobbyUpdate?.Invoke(message.lu.IsHost);
+                            Client.MessagesIncoming.OnLobbyUpdate?.Invoke(message.lu.IsHost, message.lu.DC, message.lu.C);
 
                             // Lobby update
                             Client.NetworkVariables.IsHost = message.lu.IsHost;
+
+                            if (message.lu.DC != 0)
+                            {
+                                // Disconnected connection, remove spawned player if exist.
+                                Network.Identity.List.Remove (Network.Identity.List.Find(x => x.Id == message.lu.DC));
+                            }
+
                             break;
 
                         case Client.MessagesIncoming.MessageType.LobbyLeave:

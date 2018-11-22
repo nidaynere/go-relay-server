@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 using RelayClient;
+using Unity.Entities;
 
 public class Manager : MonoBehaviour
 {
+    public List<RelayClient.Network.Identity> List = new List<RelayClient.Network.Identity>();
     public string ip = "127.0.0.1";
     public int port = 3333;
 
@@ -13,7 +15,21 @@ public class Manager : MonoBehaviour
     {
         Main.Connect(ip, port);
         RelayClient.Client.MessagesIncoming.OnLobbyJoined = (bool Success, int Id) => { Debug.Log("OnLobbyJoined: " + Success + " Id:"+Id); };
-        RelayClient.Client.MessagesIncoming.OnLobbyUpdate = (bool IsHost) => { Debug.Log("OnLobbyUpdate-> IsHost:" + IsHost); };
+        RelayClient.Client.MessagesIncoming.OnLobbyUpdate = (bool IsHost, int Disconnected, int Connected) => 
+        {
+            Debug.Log("OnLobbyUpdate-> IsHost:" + IsHost);
+
+            if (Disconnected != 0)
+            {
+                Debug.Log("Player Disconnected: " + Disconnected);
+            }
+
+            if (Connected != 0)
+            {
+                Debug.Log("Player Connected: " + Connected);
+            }
+        };
+
         RelayClient.Network.Actions.OnIdentityUpdate = (RelayClient.Network.Identity _Identity) =>
         {
             NetworkObject networkObject = NetworkObject.List.Find(x => x.Id == _Identity.Id);
@@ -24,7 +40,15 @@ public class Manager : MonoBehaviour
                 Asset = Instantiate(Asset);
                 networkObject = Asset.AddComponent<NetworkObject>();
                 networkObject.Id = _Identity.Id;
-                networkObject.Sync(true); 
+                networkObject.CertainUpdate = true;
+
+                Asset.AddComponent<GameObjectEntity>();
+
+                if (_Identity.Id == RelayClient.Client.NetworkVariables.ConnectionId)
+                {
+                    /// Our player!
+                    Asset.AddComponent<Player.PlayerController>();
+                }
             }
         };
 
@@ -36,6 +60,8 @@ public class Manager : MonoBehaviour
     void Update()
     {
         Main.Update ();
+
+        List = RelayClient.Network.Identity.List;
     }
 
     void OnGUI()
@@ -47,8 +73,8 @@ public class Manager : MonoBehaviour
 
         if (GUI.Button(new Rect(0, 50, 100, 20), "Spawnplayer"))
         {
-            RelayClient.Network.Spawner.SpawnPlayer("Cube", NetworkObject.VectorToFloat (new Vector3 (0,0,1)), NetworkObject.VectorToFloat(new Vector3(0, 0, 45)));
-        }
+            RelayClient.Network.Spawner.SpawnPlayer("Guardian", new float[] { 0, 0, 2 }, new float[] { 0, 0, 0 });
+        } 
     }
 
     float nextUpdate = 0;
@@ -59,7 +85,7 @@ public class Manager : MonoBehaviour
     {
         if (nextUpdate < Time.time)
         {
-            nextUpdate = Time.time + 0.2f; // 5 times in a second.
+            nextUpdate = Time.time + 0.1f; // 10 times in a second.
             RelayClient.Network.Identity.Update();
         }
     }

@@ -1,5 +1,3 @@
-///TODO need parser to split to handle sent string
-
 package main
 
 import (
@@ -37,9 +35,10 @@ type lobby struct {
 	Host int // Host index
 }
 
-func LobbyUpdate (Lobby *lobby){
+///Disconnected: Disconnected player id, Connected: Connected player id.
+func LobbyUpdate (Lobby *lobby, Disconnected int, Connected int){
 	var outgoing = OutgoingMessage { Purpose : 2 }
-	outgoing.LobbyUpdate = _OnLobbyUpdate {}
+	outgoing.LobbyUpdate = _OnLobbyUpdate { DC : Disconnected, C : Connected }
 
 	var NeedHost = false
 	if Lobby.Host == -1 || !Lobby.Connections[Lobby.Host].IsConnected {
@@ -56,15 +55,15 @@ func LobbyUpdate (Lobby *lobby){
 				}
 				
 				outgoing.LobbyUpdate.IsHost = e == Lobby.Host
-				sendMessage (Lobby.Connections[e], outgoing)
+				send (Lobby.Connections[e], &outgoing)
 			}
 		}
 	}
 }
 
 /// ALL CONNECTIONS
-var Connections [8000]connection // Maximum 8000 players
-var Lobbies [1000]lobby // In 1000 lobbies
+var Connections [64]connection // Maximum 64 players
+var Lobbies [8]lobby // In 8 lobbies
 
 ///Returns true if any connected player in this lobby. It means lobby is held.
 func AnyPlayerInLobby (Lobby *lobby) (bool){
@@ -88,12 +87,13 @@ func RemoveConnectionFromLobby (Connection *connection) {
 
 	for i := range Connection.Lobby.Connections {
 		if Connection.Lobby.Connections[i] == Connection {
+			var dId = Connection.Id
 			var dCon connection
 			dCon.IsConnected = false
 			Connection.Lobby.Connections[i] = &dCon
 			fmt.Println ("Connection removed from lobby")
 			
-			LobbyUpdate (Connection.Lobby)
+			LobbyUpdate (Connection.Lobby, dId, 0)
 		}
 	}
 }
@@ -107,12 +107,6 @@ func GetLobbySlot (Lobby *lobby) (bool, int){
 	}
 
 	return false, -1
-}
-
-func CloseLobby (Lobby *lobby){
-	for i := range Lobby.Connections {
-		Lobby.Connections[i].IsConnected = false
-	}
 }
 
 func addconnection (newconnection net.Conn) {
@@ -156,96 +150,102 @@ func main() {
 	
 	fmt.Println("Listening on " + CONN_HOST + ":" + CONN_PORT)
 
-	second := time.Tick(time.Second)
-	millisecond := time.Tick(time.Millisecond)
-    for {
-        select {
-        case <-second:
-			go WaitForConnection()
-			go handleRequests()
-		case <-millisecond:
-			go handleMessages()
-		}
+	go StartPing ()
+
+	go StartListen()
+
+	WaitForConnection ()
+}
+
+func StartPing (){
+
+	for i := range Connections { // Start pinging
+		go PingToConnection (&Connections[i])
+	}
+}
+
+func StartListen (){
+	for i := range Connections { // Listen messages
+		go ListenTheConnection (&Connections [i])
 	}
 }
 
 /// Listen for the new connections
 func WaitForConnection () {
-	conn, err := listener.Accept()
+	second := time.Tick(time.Second)
 
-	if err != nil {
-		fmt.Println("Error accepting: ", err.Error())
-		//os.Exit(1)
-	} else {
-	// New connection here.
-		addconnection (conn)
-	}
-}
+	for {
+        select {
+		case <-second:
+			conn, err := listener.Accept()
 
-// Handles the connections. Pings them every one second
-func handleRequests() {
-	for i := range Connections {
-		if Connections[i].IsConnected {
-			go handleRequest (&Connections[i])
+			if err != nil {
+				fmt.Println("Error accepting: ", err.Error())
+				//os.Exit(1)
+			} else {
+			// New connection here.
+				addconnection (conn)
+			}
 		}
 	}
 }
 
-func handleRequest (conn *connection){
-	// Ping the connection.
-	if conn.Conn == nil || !conn.IsConnected {
-		return
-	}
+func PingToConnection (conn *connection){
+	second := time.Tick(time.Second)
 
-	var msg OutgoingMessage = OutgoingMessage{ Purpose : -1 }
-	var success bool = send (conn, &msg)
-			
-	if !success {
-		conn.IsConnected = false
-		RemoveConnectionFromLobby (conn)
-		conn.Lobby = nil;
-		fmt.Println("Client disconnected")
-	}
-}
+	defer func() {
+		fmt.Println("Closing connection...")
+		conn.Conn.Close()
+	}()
 
-func handleMessages () {
-	for i := range Connections {
-		if Connections[i].IsConnected {
-			go handleMessage (&Connections[i])
+	for {
+        select {
+		case <-second:
+			// Ping the connection.
+			if conn.IsConnected {
+				var msg OutgoingMessage = OutgoingMessage{ Purpose : -1 }
+				var success bool = send (conn, &msg)
+
+				if !success {
+					conn.IsConnected = false
+					RemoveConnectionFromLobby (conn)
+					conn.Lobby = nil;
+					fmt.Println("Client disconnected")
+				}
+			}
 		}
 	}
 }
 
-func handleMessage (conn *connection) {
-	if conn.Conn == nil || !conn.IsConnected {
-		return
+func ListenTheConnection (conn *connection){
+	millisecond := time.Tick(time.Millisecond)
+
+	defer func() {
+		fmt.Println("Closing connection...")
+		conn.Conn.Close()
+	}()
+
+	for {
+        select {
+		case <- millisecond:
+			if conn.IsConnected {
+				//Read the incoming connection into the buffer.
+				buf := make([]byte, 1024)
+				//Read the incoming connection into the buffer.
+				length, error := conn.Conn.Read(buf)
+
+				if error == nil {
+					var incoming string = string(buf[:length])
+					ProcessData (incoming, conn)
+				}/* else {
+					fmt.Println (conn.err)
+				}*/
+			}
+		}
 	}
-
-	//Make a buffer to hold incoming data.
-	buf := make([]byte, 65535)
-	//Read the incoming connection into the buffer.
-	length, error := conn.Conn.Read(buf)
-
-	if error == nil {
-		var incoming string = string(buf[:length])
-		//fmt.Println("sender's lobby: ", connections[i].lobby)
-		//go sendMessage (&connections[i], "mesajini aldim kankey")
-		// TODO: Relay the message to all lobby members
-		ProcessData (incoming, conn)
-	}
-}
-
-//usage: sendMessage (&connections[i], incoming) // send back the incoming message
-func sendMessage (conn *connection, msg OutgoingMessage) {
-
-	go send (conn, &msg)
 }
 
 func send (conn *connection, msg *OutgoingMessage) (bool) {
-	if conn.Conn == nil{
-		return false
-	}
-
 	e, err := json.Marshal(msg)
     if err != nil {
         return false
@@ -268,11 +268,10 @@ func ProcessData (data string, sender *connection) {
 		return
 	}
 
-	fmt.Println ("incoming message purpose: ", netMessage.Purpose)
-	fmt.Println ("sender id: ", sender.Id)
-
 	var outgoing OutgoingMessage = OutgoingMessage{}
 	outgoing.Purpose = netMessage.Purpose // Add the purpose
+
+	fmt.Println ("Incoming message: ", netMessage.Purpose, sender.Id)
 
 	switch netMessage.Purpose {
 		case 0: // Join Lobby
@@ -281,7 +280,7 @@ func ProcessData (data string, sender *connection) {
 
 			if sender.Lobby != nil{
 				fmt.Println ("Join lobby request: but already in a lobby. Leave it first.")
-				sendMessage (sender, outgoing)
+				send (sender, &outgoing)
 				return;
 			}
 
@@ -296,6 +295,7 @@ func ProcessData (data string, sender *connection) {
 						sender.Lobby = &Lobbies[i]
 						fmt.Println ("Joined.")
 						outgoing.JoinLobby.Success = true
+						LobbyUpdate (&Lobbies[i], 0, sender.Id)
 						break
 					}
 				}else{
@@ -304,13 +304,13 @@ func ProcessData (data string, sender *connection) {
 					sender.Lobby = &Lobbies[i]
 					fmt.Println ("Created.")
 					outgoing.JoinLobby.Success = true
-					LobbyUpdate (&Lobbies[i])
+					LobbyUpdate (&Lobbies[i], 0, sender.Id)
 					break
 				}
 			}
 
 			outgoing.JoinLobby.Id = sender.Id
-			sendMessage (sender, outgoing) // Send for callback.
+			send (sender, &outgoing) // Send for callback.
 		case 1: // Relay to Lobby
 		
 		if sender.Lobby == nil{
@@ -321,7 +321,7 @@ func ProcessData (data string, sender *connection) {
 
 		for e:=range sender.Lobby.Connections {
 			if sender.Lobby.Connections[e] != nil && sender.Lobby.Connections[e].IsConnected {
-				sendMessage (sender.Lobby.Connections[e], outgoing)
+				send (sender.Lobby.Connections[e], &outgoing)
 			}
 		}
 	}

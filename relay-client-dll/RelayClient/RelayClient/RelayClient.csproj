@@ -51,6 +51,7 @@
     <Compile Include="Methods.cs" />
     <Compile Include="MessagesOutgoing.cs" />
     <Compile Include="Network.cs" />
+    <Compile Include="NetworkUpdater.cs" />
     <Compile Include="NetworkVariables.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

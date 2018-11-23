@@ -63,10 +63,12 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\Scripts\Agent\Agent.cs" />
-    <Compile Include="Assets\Scripts\Agent\AgentVariables.cs" />
+    <Compile Include="Assets\Scripts\Agent\AIController.cs" />
     <Compile Include="Assets\Scripts\Agent\PlayerController.cs" />
     <Compile Include="Assets\Scripts\Manager.cs" />
     <Compile Include="Assets\Scripts\NetworkObject.cs" />
+    <Compile Include="Assets\Scripts\Variables\AgentVariables.cs" />
+    <Compile Include="Assets\Scripts\Variables\AIVariables.cs" />
     <Compile Include="Assets\Scripts\Variables\Variables.cs" />
     <Compile Include="Assets\Scripts\Visual\Visual.cs" />
     <Reference Include="Unity.Entities.Properties">

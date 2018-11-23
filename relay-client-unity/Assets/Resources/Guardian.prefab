@@ -2217,9 +2217,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1492b30f6bf977e41985fbf78c75584d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  HP: 50
-  Damage: 10
-  MoveSpeed: 6
+  _Health: 100
+  _MoveSpeed: 5
+  _Damage: 10
 --- !u!136 &1059238505667955939
 CapsuleCollider:
   m_ObjectHideFlags: 0

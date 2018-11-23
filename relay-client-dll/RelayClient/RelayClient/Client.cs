@@ -24,10 +24,10 @@ namespace RelayClient
         /// </summary>
         public static void Connect(string ip, int port) {
             client = new TcpClient();
-            client.ReceiveBufferSize = 65536;
-            client.SendBufferSize = 65536;
-            client.SendTimeout = 3;
-            client.ReceiveTimeout = 3;
+            client.ReceiveBufferSize = 8192;
+            client.SendBufferSize = 8192;
+            client.SendTimeout = 8;
+            client.ReceiveTimeout = 8;
             client.Connect(ip, port);
         }
 
@@ -52,7 +52,7 @@ namespace RelayClient
 
             Stream stm = client.GetStream();
 
-            byte[] bb = new byte[65536]; // Max message length;
+            byte[] bb = new byte[8192]; // Max message length;
 
             int k = stm.Read(bb, 0, bb.Length);
 
@@ -64,6 +64,7 @@ namespace RelayClient
             return null;
         }
 
+        public static Action<string> OnNetworkMessage;
         /// <summary>
         /// Call this to get actions.
         /// </summary>
@@ -73,74 +74,69 @@ namespace RelayClient
                 return;
 
             string Msg = Read();
+
             if (!string.IsNullOrEmpty(Msg))
             {
-                try
+                var list = JsonExtensions.FromDelimitedJson<Client.MessagesIncoming.NetworkMessage>(new StringReader (Msg)).ToList();
+
+                foreach (Client.MessagesIncoming.NetworkMessage message in list)
                 {
-                    var list = JsonExtensions.FromDelimitedJson<Client.MessagesIncoming.NetworkMessage>(new StringReader(Msg)).ToList();
-
-                    foreach (Client.MessagesIncoming.NetworkMessage message in list)
+                    switch (message.t)
                     {
-                        switch (message.t)
-                        {
-                            case Client.MessagesIncoming.MessageType.JoinLobby:
-                                Client.MessagesIncoming.OnLobbyJoined?.Invoke(message.jl.Success, message.jl.Id);
-                                Client.NetworkVariables.ConnectionId = message.jl.Id;
-                                break;
+                        case Client.MessagesIncoming.MessageType.JoinLobby:
+                            Client.MessagesIncoming.OnLobbyJoined?.Invoke(message.jl.Success, message.jl.Id);
+                            Client.NetworkVariables.ConnectionId = message.jl.Id;
+                            break;
 
-                            case Client.MessagesIncoming.MessageType.P2P:
-                                string p2pmsg = Encoding.UTF8.GetString(CLZF2.Decompress(message.m.Msg));
-                                Client.MessagesIncoming.OnP2P?.Invoke(p2pmsg, message.m.s); // Available for custom methods.
+                        case Client.MessagesIncoming.MessageType.P2P:
+                            string p2pmsg = Encoding.UTF8.GetString(CLZF2.Decompress(message.m.Msg));
+                            Client.MessagesIncoming.OnP2P?.Invoke(p2pmsg, message.m.s); // Available for custom methods.
 
-                                try
-                                {
-                                    Network.Identity identity = JsonConvert.DeserializeObject<Network.Identity>(p2pmsg);
+                            OnNetworkMessage?.Invoke(p2pmsg);
 
-                                    if (identity.netType == Network.Identity.NetworkType.Request)
-                                    { // Host assigns an id here.
-                                        if (Client.NetworkVariables.IsHost)
-                                        {
-                                            identity.Id = Network.Identity.IdCounter++;
-                                            identity.netType = Network.Identity.NetworkType.Post;
-                                            identity.Spawn();
-                                        }
-                                    }
-                                    else
+                            Network.Identity identity = JsonConvert.DeserializeObject<Network.Identity>(p2pmsg);
+
+                                if (identity.netType == Network.Identity.NetworkType.Request)
+                                { // Host assigns an id here.
+                                    if (Client.NetworkVariables.IsHost)
                                     {
-                                        //This is a post.
-                                        identity.OnSpawned();
-                                        Network.Actions.OnIdentityUpdate?.Invoke(identity);
+                                        identity.Id = Network.Identity.IdCounter++;
+                                        identity.netType = Network.Identity.NetworkType.Post;
+                                        identity.Spawn();
                                     }
                                 }
-                                catch
+                                else
                                 {
-
+                                    //This is a post.
+                                    identity.OnSpawned(); // Because this may remove the identity.
+                                    Network.Actions.OnIdentityUpdate?.Invoke(identity); // Ordering is importent here. OnIdentityUpdate should be called first.
                                 }
 
-                                break;
+                            break;
 
-                            case Client.MessagesIncoming.MessageType.LobbyUpdate:
-                                Client.MessagesIncoming.OnLobbyUpdate?.Invoke(message.lu.IsHost, message.lu.DC, message.lu.C);
+                        case Client.MessagesIncoming.MessageType.LobbyUpdate:
+                            Client.MessagesIncoming.OnLobbyUpdate?.Invoke(message.lu.IsHost, message.lu.DC, message.lu.C);
 
-                                // Lobby update
-                                Client.NetworkVariables.IsHost = message.lu.IsHost;
+                            // Lobby update
+                            Client.NetworkVariables.IsHost = message.lu.IsHost;
 
-                                if (message.lu.DC != 0)
-                                {
-                                    // Disconnected connection, remove spawned player if exist.
-                                    Network.Identity.List.Remove(Network.Identity.List.Find(x => x.Id == message.lu.DC));
-                                }
+                            if (message.lu.DC != 0)
+                            {
+                                // Disconnected connection, remove spawned player if exist.
+                                Network.Identity _identity = Network.Identity.List.Find(x => x.Id == message.lu.DC);
+                                if (_identity != null)
+                                    _identity.Variables.SetVariable("Destroy", 2);
+                            }
 
-                                break;
+                            break;
 
-                            case Client.MessagesIncoming.MessageType.LobbyLeave:
-                                Client.MessagesIncoming.OnLobbyLeave?.Invoke();
-                                break;
-                        }
+                        case Client.MessagesIncoming.MessageType.LobbyLeave:
+                            Client.MessagesIncoming.OnLobbyLeave?.Invoke();
+                            break;
                     }
                 }
-                catch { }
             }
+
         }
 
         /// <summary>

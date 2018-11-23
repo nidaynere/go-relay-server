@@ -18,6 +18,7 @@ public class Manager : MonoBehaviour
 
         //TEST RelayClient.Client.Methods.Relaying = () => { Debug.Log("Message sending...");  };
 
+        Main.OnNetworkMessage = (string Msg) => { Debug.Log(Msg); };
         RelayClient.Client.MessagesIncoming.OnLobbyJoined = (bool Success, int Id) => { Debug.Log("OnLobbyJoined: " + Success + " Id:"+Id); };
         RelayClient.Client.MessagesIncoming.OnLobbyUpdate = (bool IsHost, int Disconnected, int Connected) => 
         {
@@ -37,7 +38,7 @@ public class Manager : MonoBehaviour
         RelayClient.Network.Actions.OnIdentityUpdate = (RelayClient.Network.Identity _Identity) =>
         {
             NetworkObject networkObject = NetworkObject.List.Find(x => x.Id == _Identity.Id);
-            if (networkObject == null)
+            if (networkObject == null && _Identity.Variables.GetVariableAsFloat ("Destroy") == 0)
             {
                 Debug.Log("Spawn Identity(): " + _Identity.i);
                 GameObject Asset = Resources.Load<GameObject>(_Identity.Asset);
@@ -46,24 +47,54 @@ public class Manager : MonoBehaviour
                 networkObject.Id = _Identity.Id;
                 networkObject.CertainUpdate = true;
 
+                ///Destroy callback implementation
+                RelayClient.Client.NetworkVariables.Variables.AddVariableCallback(_Identity.Id, "Destroy").OnChanged = 
+                (string OldValue, string NewValue) => {
+                    float destroyTime = float.Parse(NewValue);
+
+                    Debug.Log("Destroy on changed: " + NewValue);
+                    if (destroyTime > 0)
+                    {
+                        Debug.Log(Time.time);
+                        Debug.Log ("Destroying asset: " + destroyTime);
+                        Destroy(Asset, destroyTime);
+                        networkObject.visual.UpdateMaterials();
+                        networkObject.visual.OnUpdate += networkObject.visual.FadeOut;
+
+                        RelayClient.Network.Identity willRemove = RelayClient.Network.Identity.List.Find(x => x.Id == networkObject.Id);
+                        willRemove?.OnDestroyed();
+                    }
+                };
+                //
+
                 Asset.AddComponent<GameObjectEntity>();
 
                 if (Asset.CompareTag("Agent"))
                 {
-                    if (_Identity.Id == RelayClient.Client.NetworkVariables.ConnectionId)
+                    if (_Identity.Variables.GetVariableAsBool("IsPlayer"))
                     {
-                        /// Our player!
-                        Agents.PlayerController.Instance = Asset.AddComponent<Agents.PlayerController>();
+                        if (_Identity.Id == RelayClient.Client.NetworkVariables.ConnectionId)
+                        {
+                            /// Our player!
+                            Agents.PlayerController.Instance = Asset.AddComponent<Agents.PlayerController>();
+                        }
+                        else
+                        {
+                            Asset.AddComponent<Agents.Agent>();
+                        }
                     }
                     else
                     {
-                        Asset.AddComponent<Agents.Agent>();
+                        Asset.AddComponent<Agents.AIController>();
                     }
                 }
                 else networkObject.OnUpdate += networkObject.SmoothSync;
             }
 
-            networkObject.NetworkUpdate(_Identity);
+            if (networkObject)
+            {
+                networkObject.NetworkUpdate(_Identity);
+            }
         };
 
         //RelayClient.Client.MessagesIncoming.OnP2P = (string Message, int Sender) => { Debug.Log("Message: " + Message + ", Sender: " + Sender); };
@@ -76,6 +107,11 @@ public class Manager : MonoBehaviour
         Main.Update ();
         List = RelayClient.Network.Identity.List;
         Callbacks = RelayClient.Client.NetworkVariables.Variables.Callbacks;
+    }
+
+    private void LateUpdate()
+    {
+        NetworkUpdater.Update();
     }
 
     void OnGUI()
@@ -92,21 +128,7 @@ public class Manager : MonoBehaviour
 
         if (GUI.Button(new Rect(0, 100, 100, 20), "SpawnBoxFronOfMyChar"))
         {
-            RelayClient.Network.Spawner.Spawn ("Cube", NetworkObject.Vector3ToFloat (Agents.PlayerController.Instance.transform.position + Agents.PlayerController.Instance.transform.forward*4), new float[] { 0, 0, 0 });
-        }
-    }
-
-    float nextUpdate = 0;
-
-    /// <summary>
-    /// Network update at late update.
-    /// </summary>
-    private void LateUpdate()
-    {
-        if (nextUpdate < Time.time)
-        {
-            nextUpdate = Time.time + 0.2f; // 5 times in a second.
-            RelayClient.Network.Identity.Update();
+            RelayClient.Network.Spawner.Spawn ("Skeleton", NetworkObject.Vector3ToFloat (Agents.PlayerController.Instance.transform.position + Agents.PlayerController.Instance.transform.forward*4), new float[] { 0, 0, 0 });
         }
     }
 

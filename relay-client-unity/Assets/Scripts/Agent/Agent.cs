@@ -16,29 +16,38 @@ namespace Agents
 
         public NetworkObject networkObject;
         public Animator animator;
-        public AgentVariables variables;
+        public Variables variables;
+
+        public System.Action OnDie;
+
+        public static List<Agent> List = new List<Agent>();
 
         /// <summary>
-        /// This will control all the visual shader effects.
+        /// Is a player or AI?
         /// </summary>
-        public Visual visual;
+        public bool IsPlayer;
 
         // Start is called before the first frame update
-        void Start()
+        void Awake ()
         {
-            variables = GetComponent<AgentVariables>();
+            List.Add(this);
+
             animator = GetComponent<Animator>();
             networkObject = GetComponent<NetworkObject>();
+            variables = GetComponent<Variables>();
 
-            visual = gameObject.AddComponent<Visual>();
+            networkObject.visual = gameObject.AddComponent<Visual>();
 
-            visual.UpdateMaterials();
-            visual.OnUpdate += visual.FadeIn;
+            networkObject.visual.UpdateMaterials();
+            networkObject.visual.Born();
+            networkObject.visual.OnUpdate += networkObject.visual.FadeIn;
 
             Identity identity = Identity.List.Find(x => x.Id == networkObject.Id);
 
+            IsPlayer = identity.Variables.GetVariableAsBool("IsPlayer");
+
             //Health ->
-            identity.Variables.SetVariable("HP", variables.HP);
+            identity.Variables.SetVariable("HP", variables.Health());
             NetworkVariables.Variables.AddVariableCallback(networkObject.Id, "HP").OnChanged = (string OldValue, string NewValue) =>
             { //-->Callback
                 Debug.Log("OnHPUpdate()-> " +
@@ -52,8 +61,8 @@ namespace Agents
 
                     if (New < Old)
                     {
-                        visual.UpdateMaterials();
-                        visual.OnUpdate += visual.DamageIn;
+                        networkObject.visual.UpdateMaterials();
+                        networkObject.visual.OnUpdate += networkObject.visual.DamageIn;
 
                         Debug.Log("Damage Visual()");
 
@@ -61,7 +70,14 @@ namespace Agents
                         {
                             //Dead.
                             animator.SetBool("Dead", true);
+
+                            OnDie?.Invoke();
                         }
+                    }
+                    else if (animator.GetBool("Dead"))
+                    {
+                        animator.SetBool("Attack", false); // Disable the attack
+                        animator.SetBool("Dead", false);
                     }
                 }
             };
@@ -74,9 +90,17 @@ namespace Agents
 
         }
 
+        private void OnDestroy()
+        {
+            List.Remove(this);
+        }
+
         private void Update()
         {
             Identity identity = Identity.List.Find(x => x.Id == networkObject.Id);
+
+            if (identity == null)
+                return;
 
             Controller(identity); // Call the agent controller
 
@@ -86,7 +110,7 @@ namespace Agents
             float absvertical = Mathf.Abs(vertical);
 
             bool isMoving = false;
-            if (abshorizontal > 0 || absvertical > 0)
+            if ((abshorizontal > 0 || absvertical > 0) && !animator.GetBool ("Dead"))
                 isMoving = true;
 
             if (animator != null)
@@ -101,7 +125,7 @@ namespace Agents
                 transform.rotation = Quaternion.Slerp(transform.rotation, Look, Time.deltaTime * 10);
 
                 //Disable this if you have a root motion moving animation.
-                transform.position += direction * Time.deltaTime * variables.MoveSpeed;
+                transform.position += direction * Time.deltaTime * variables.MoveSpeed();
             }
         }
 
@@ -117,7 +141,7 @@ namespace Agents
             foreach (RaycastHit raycastHit in hits)
             {
                 if (raycastHit.collider.gameObject == gameObject)
-                   continue; // Skip self.
+                   continue;
 
                 Debug.Log(raycastHit.collider.name);
                 switch (raycastHit.collider.tag)
@@ -126,12 +150,7 @@ namespace Agents
                         Agent agent = raycastHit.collider.GetComponent<Agent>();
 
                         Identity hit = Identity.List.Find(x => x.Id == agent.networkObject.Id);
-
-                        if (PlayerController.Instance == agent || NetworkVariables.IsHost)
-                        {
-                            // Local player. control this.
-                            hit.Variables.SetVariable("HP", hit.Variables.GetVariableAsInt("HP") - variables.Damage);
-                        }
+                        hit.Variables.SetVariable("HP", hit.Variables.GetVariableAsInt("HP") - variables.Damage());
                         break;
                 }
             }

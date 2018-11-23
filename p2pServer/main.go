@@ -230,7 +230,7 @@ func ListenTheConnection (conn *connection){
 		case <- millisecond:
 			if conn.IsConnected {
 				//Read the incoming connection into the buffer.
-				buf := make([]byte, 65536)
+				buf := make([]byte, 8192)
 				//Read the incoming connection into the buffer.
 				length, error := conn.Conn.Read(buf)
 

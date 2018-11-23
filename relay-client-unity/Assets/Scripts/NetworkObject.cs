@@ -10,6 +10,11 @@ using Unity.Entities;
 /// </summary>
 public class NetworkObject : MonoBehaviour
 {
+    public static float Decimal(float value)
+    {
+        return Mathf.Floor(value * 100) / 100;
+    }
+
     public static float[] Vector3ToFloat(Vector3 vector)
     {
         return new float[3] { vector.x, vector.y, vector.z };
@@ -22,6 +27,11 @@ public class NetworkObject : MonoBehaviour
 
     [HideInInspector]
     public Animator animator;
+
+    /// <summary>
+    /// This will control all the visual shader effects.
+    /// </summary>
+    public Visual visual;
 
     private void Start ()
     {
@@ -56,15 +66,6 @@ public class NetworkObject : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
-    {
-        Identity identity = Identity.List.Find(x => x.Id == Id);
-        if (identity != null)
-            identity.OnDestroyed();
-
-        List.Remove(this);
-    }
-
     /// <summary>
     /// This will be enabled at first spawn to receive the spawn position and rotation even if we are the syncer of this object.
     /// </summary>
@@ -75,8 +76,8 @@ public class NetworkObject : MonoBehaviour
     /// </summary>
     public int Id;
 
-    public float Sync_PositionTolerance = 2f;
-    public float Sync_RotationTolerance = 180f;
+    public float Sync_PositionTolerance = 10f;
+    public float Sync_RotationTolerance = 360f;
 
     /// <summary>
     /// Smooth syncing, used for non-agent objects.
@@ -150,10 +151,7 @@ class NetworkObjectEntity : ComponentSystem
             Identity identity = Identity.List.Find(x => x.Id == e.networkObject.Id);
 
             if (identity == null)
-            {
-                Object.Destroy (e.transform.gameObject);
                 continue;
-            }
 
             #region get from network
             if (Identity.NeedToRetrieve(identity) || e.networkObject.CertainUpdate)
@@ -189,12 +187,12 @@ class NetworkObjectEntity : ComponentSystem
             if (Identity.NeedToSync(identity))
             {
                 #region transform
-                identity.Variables.SetVariable("PositionX", e.transform.position.x);
-                identity.Variables.SetVariable("PositionY", e.transform.position.y);
-                identity.Variables.SetVariable("PositionZ", e.transform.position.z);
-                identity.Variables.SetVariable("AngleX", e.transform.eulerAngles.x);
-                identity.Variables.SetVariable("AngleY", e.transform.eulerAngles.y);
-                identity.Variables.SetVariable("AngleZ", e.transform.eulerAngles.z);
+                identity.Variables.SetVariable("PositionX", NetworkObject.Decimal(e.transform.position.x));
+                identity.Variables.SetVariable("PositionY", NetworkObject.Decimal(e.transform.position.y));
+                identity.Variables.SetVariable("PositionZ", NetworkObject.Decimal(e.transform.position.z));
+                identity.Variables.SetVariable("AngleX", NetworkObject.Decimal(e.transform.eulerAngles.x));
+                identity.Variables.SetVariable("AngleY", NetworkObject.Decimal(e.transform.eulerAngles.y));
+                identity.Variables.SetVariable("AngleZ", NetworkObject.Decimal(e.transform.eulerAngles.z));
                 #endregion
 
                 if (e.networkObject.animator != null)

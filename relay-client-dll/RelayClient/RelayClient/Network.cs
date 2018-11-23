@@ -86,28 +86,11 @@ namespace RelayClient
             public static List<Identity> List = new List<Identity>();
 
             /// <summary>
-            /// Update Identities to all lobby, if its host.
-            /// </summary>
-            public static void Update()
-            {
-                if (!Main.client.Connected)
-                    return;
-
-                for (int i = 0; i < List.Count; i++)
-                {
-                    if (List[i] != null)
-                    {
-                        if (NeedToSync (List[i]))
-                            List[i].Spawn();
-                    }
-                }
-            }
-
-            /// <summary>
             /// Destroyed network object actions.
             /// </summary>
-            public void OnDestroyed()
+            public void OnDestroyed ()
             {
+                // Remove this from List, it should be removed on the application.
                 Client.NetworkVariables.Variables.RemoveCallbacks(Id);
                 List.Remove(this);
             }
@@ -129,7 +112,13 @@ namespace RelayClient
                     List[Index] = this; // Replace.
                     Client.NetworkVariables.Variables.CheckCallbacks(Id);
                 }
-                else List.Add(this);
+                else
+                {
+                    if (Variables.GetVariableAsFloat("Destroy") == 0)
+                    {
+                        List.Add(this);
+                    }
+                }
             }
 
             /// <summary>
@@ -168,7 +157,7 @@ namespace RelayClient
                 Variables.SetVariable("AngleX", _Angles[0].ToString());
                 Variables.SetVariable("AngleY", _Angles[1].ToString());
                 Variables.SetVariable("AngleZ", _Angles[2].ToString());
-
+                Variables.SetVariable("Destroy", 0);
             }
 
             /// <summary>
@@ -189,6 +178,7 @@ namespace RelayClient
                 Variables.SetVariable("AngleX", _Angles[0].ToString());
                 Variables.SetVariable("AngleY", _Angles[1].ToString());
                 Variables.SetVariable("AngleZ", _Angles[2].ToString());
+                Variables.SetVariable("Destroy", 0);
             }
 
             /// <summary>
@@ -231,6 +221,7 @@ namespace RelayClient
                 Identity New = new Identity(_Asset, Client.NetworkVariables.ConnectionId, _Position, _Angles);
                 New.netType = Identity.NetworkType.Post;
                 New.objType = Identity.ObjectType.Player;
+                New.Variables.SetVariable("IsPlayer", true);
                 New.Spawn ();
             }
         }

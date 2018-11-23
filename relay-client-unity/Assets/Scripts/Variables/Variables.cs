@@ -5,4 +5,5 @@ using UnityEngine;
 public class Variables : MonoBehaviour
 {
     public int HP;
+    public int Damage;
 }

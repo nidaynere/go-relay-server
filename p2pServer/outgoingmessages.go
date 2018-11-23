@@ -15,7 +15,7 @@ type _OnJoinLobby struct {
 
 type _OnP2P struct {
 	Sender int `json:"s,omitempty"` // Sender, 0= host.
-	Msg string
+	Msg []byte
 }
 
 type _OnLobbyUpdate struct {

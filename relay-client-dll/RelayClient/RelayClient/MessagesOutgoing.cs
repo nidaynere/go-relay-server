@@ -38,9 +38,9 @@ namespace RelayClient
 
             public class _RelayToLobby
             {
-                public string m;
+                public byte[] m;
 
-                public _RelayToLobby(string message) { m = message; }
+                public _RelayToLobby(byte[] bytes) { m = bytes; }
             }
         }
     }

@@ -10,54 +10,34 @@ using Unity.Entities;
 /// </summary>
 public class NetworkObject : MonoBehaviour
 {
+    public static float[] Vector3ToFloat(Vector3 vector)
+    {
+        return new float[3] { vector.x, vector.y, vector.z };
+    }
+
     /// <summary>
     /// Spawned network objects.
     /// </summary>
     public static List<NetworkObject> List = new List<NetworkObject>();
 
     [HideInInspector]
-    public Rigidbody rbody;
-    [HideInInspector]
     public Animator animator;
 
-    public float SpeedSyncPosition = 10f;
-    public float SpeedSyncRotation = 10f;
-
-    private void Start()
+    private void Start ()
     {
         animator = GetComponent<Animator>();
-        rbody = GetComponent<Rigidbody>();
 
         List.Add(this);
+
+        gameObject.name = Id.ToString();
 
         Identity identity = Identity.List.Find(x => x.Id == Id);
 
         if (identity != null && Identity.NeedToSync (identity))
         {
-            if (rbody != null)
-                SyncRigidbody(identity); // We are the syncer. Sync the starting variables of rigidbody.
-
             if (animator != null)
                 SyncAnimator(identity); // We are the syncer. Sync the starting variables of animator.
         }
-    }
-
-    /// <summary>
-    /// Sync rigidbody variables
-    /// </summary>
-    /// <param name="identity"></param>
-    public void SyncRigidbody(Identity identity)
-    {
-        identity.Variables.SetVariable("VelocityX", rbody.velocity.x);
-        identity.Variables.SetVariable("VelocityY", rbody.velocity.y);
-        identity.Variables.SetVariable("VelocityZ", rbody.velocity.z);
-        identity.Variables.SetVariable("AVelocityX", rbody.angularVelocity.x);
-        identity.Variables.SetVariable("AVelocityY", rbody.angularVelocity.y);
-        identity.Variables.SetVariable("AVelocityZ", rbody.angularVelocity.z);
-        identity.Variables.SetVariable("Mass", rbody.mass);
-        identity.Variables.SetVariable("IsKinematic", rbody.isKinematic);
-        identity.Variables.SetVariable("Drag", rbody.drag);
-        identity.Variables.SetVariable("AngularDrag", rbody.angularDrag);
     }
 
     public void SyncAnimator(Identity identity)
@@ -94,6 +74,62 @@ public class NetworkObject : MonoBehaviour
     /// Identity Id
     /// </summary>
     public int Id;
+
+    public float Sync_PositionTolerance = 2f;
+    public float Sync_RotationTolerance = 180f;
+
+    /// <summary>
+    /// Smooth syncing, used for non-agent objects.
+    /// </summary>
+    Vector3 SmoothSync_Position;
+    Quaternion SmoothSync_Rotation;
+
+    public System.Action OnUpdate;
+
+    public void SmoothSync()
+    {
+        transform.position = Vector3.Lerp(transform.position, SmoothSync_Position, Time.deltaTime * 10);
+        transform.rotation = Quaternion.Slerp(transform.rotation, SmoothSync_Rotation, Time.deltaTime * 10);
+    }
+
+    public void NetworkUpdate(Identity identity)
+    {
+        #region transform
+        Vector3 position = new Vector3(
+            identity.Variables.GetVariableAsFloat("PositionX"),
+            identity.Variables.GetVariableAsFloat("PositionY"),
+            identity.Variables.GetVariableAsFloat("PositionZ")
+        );
+
+        Vector3 angle = new Vector3(
+            identity.Variables.GetVariableAsFloat("AngleX"),
+            identity.Variables.GetVariableAsFloat("AngleY"),
+            identity.Variables.GetVariableAsFloat("AngleZ")
+            );
+
+        SmoothSync_Position = position;
+        SmoothSync_Rotation = Quaternion.Euler(angle);
+
+        if (CertainUpdate)
+        { // This is certain order. Probably first spawn.
+            transform.position = SmoothSync_Position;
+            transform.rotation = SmoothSync_Rotation;
+            CertainUpdate = false;
+        }
+        else
+        {
+            if (Vector3.Distance(transform.position, position) > Sync_PositionTolerance)
+            {
+                transform.position = SmoothSync_Position;
+            }
+
+            if (Quaternion.Angle(transform.rotation, Quaternion.Euler(angle)) > Sync_RotationTolerance)
+            {
+                transform.rotation = SmoothSync_Rotation;
+            }
+        }
+        #endregion
+    }
 }
 
 /// <summary>
@@ -122,6 +158,8 @@ class NetworkObjectEntity : ComponentSystem
             #region get from network
             if (Identity.NeedToRetrieve(identity) || e.networkObject.CertainUpdate)
             {
+                e.networkObject.OnUpdate?.Invoke();
+
                 #region animator
                 if (e.networkObject.animator != null && e.networkObject.animator.runtimeAnimatorController != null)
                 {
@@ -144,58 +182,6 @@ class NetworkObjectEntity : ComponentSystem
                     }
                 }
                 #endregion
-
-                #region transform
-                Vector3 position = new Vector3(
-                    identity.Variables.GetVariableAsFloat("PositionX"),
-                    identity.Variables.GetVariableAsFloat("PositionY"),
-                    identity.Variables.GetVariableAsFloat("PositionZ")
-                );
-
-                Vector3 angle = new Vector3(
-                    identity.Variables.GetVariableAsFloat("AngleX"),
-                    identity.Variables.GetVariableAsFloat("AngleY"),
-                    identity.Variables.GetVariableAsFloat("AngleZ")
-                    );
-
-
-                if (e.networkObject.CertainUpdate)
-                { // This is certain order. Probably first spawn.
-                    e.transform.position = position;
-                    e.transform.eulerAngles = angle;
-                }
-                else
-                {
-                    e.transform.position = Vector3.Lerp(e.transform.position, position, Time.deltaTime * e.networkObject.SpeedSyncPosition);
-                    e.transform.rotation = Quaternion.Slerp(e.transform.rotation, Quaternion.Euler(angle), Time.deltaTime * e.networkObject.SpeedSyncRotation);
-                }
-                #endregion
-
-                #region rigidbody
-                if (e.networkObject.rbody != null)
-                {
-                    Vector3 velocity = new Vector3(
-                        identity.Variables.GetVariableAsFloat("VelocityX"),
-                        identity.Variables.GetVariableAsFloat("VelocityY"),
-                        identity.Variables.GetVariableAsFloat("VelocityZ")
-                    );
-
-                    Vector3 angularVelocity = new Vector3(
-                        identity.Variables.GetVariableAsFloat("AVelocityX"),
-                        identity.Variables.GetVariableAsFloat("AVelocityY"),
-                        identity.Variables.GetVariableAsFloat("AVelocityZ")
-                    );
-
-                    e.networkObject.rbody.velocity = velocity;
-                    e.networkObject.rbody.angularVelocity = angularVelocity;
-                    e.networkObject.rbody.mass = identity.Variables.GetVariableAsFloat("Mass");
-                    e.networkObject.rbody.isKinematic = identity.Variables.GetVariableAsBool("IsKinematic");
-                    e.networkObject.rbody.drag = identity.Variables.GetVariableAsFloat("Drag");
-                    e.networkObject.rbody.angularDrag = identity.Variables.GetVariableAsFloat("AngularDrag");
-                }
-                #endregion
-
-                e.networkObject.CertainUpdate = false;
             }
             #endregion
 
@@ -210,9 +196,6 @@ class NetworkObjectEntity : ComponentSystem
                 identity.Variables.SetVariable("AngleY", e.transform.eulerAngles.y);
                 identity.Variables.SetVariable("AngleZ", e.transform.eulerAngles.z);
                 #endregion
-
-                if (e.networkObject.rbody != null)
-                    e.networkObject.SyncRigidbody(identity);
 
                 if (e.networkObject.animator != null)
                     e.networkObject.SyncAnimator(identity);

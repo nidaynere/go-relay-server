@@ -23,30 +23,58 @@ namespace RelayClient
             [Serializable]
             public class Variables
             {
+                [System.Serializable]
+                public class VariableCallback
+                {
+                    public int identity;
+                    public string Id;
+                    string OldValue;
+
+                    public Action<string, string> OnChanged;
+                    public void Check(string NewValue)
+                    {
+                        if (OldValue != NewValue)
+                        {
+                            OnChanged?.Invoke(OldValue, NewValue);
+                            OldValue = NewValue;
+                        }
+                    }
+                }
+
+                public static List<VariableCallback> Callbacks = new List<VariableCallback>();
+
+                public static VariableCallback AddVariableCallback(int identity, string Id)
+                {
+                    VariableCallback callback = new VariableCallback();
+                    callback.identity = identity;
+                    callback.Id = Id;
+                    Callbacks.Add(callback);
+
+                    return callback;
+                }
+
+                public static void RemoveCallbacks(int identity)
+                {
+                    List<VariableCallback> callbacks = Callbacks.FindAll(x => x.identity == identity);
+                    foreach (VariableCallback callback in callbacks)
+                        Callbacks.Remove(callback);
+                }
+
+                public static void CheckCallbacks(int identity)
+                {
+                    List<VariableCallback> callbacks = Callbacks.FindAll(x => x.identity == identity);
+                    Network.Identity Identity = Network.Identity.List.Find(x => x.Id == identity);
+                    foreach (VariableCallback callback in callbacks)
+                    {
+                        callback.Check(Identity.Variables.GetVariableAsString(callback.Id));
+                    }
+                }
+
                 [Serializable]
                 public class Variable
                 {
                     public string Id;
-                    public string _Value;
-                    public string Value
-                    {
-                        get
-                        {
-                            return _Value;
-                        }
-
-                        set
-                        {
-                            if (_Value != value)
-                            {
-                                OnChanged?.Invoke(value);
-                            }
-
-                            _Value = value;
-                        }
-                    }
-
-                    public Action<string> OnChanged;
+                    public string Value;
                 }
 
                 public List<Variable> List = new List<Variable>();

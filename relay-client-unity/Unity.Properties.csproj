@@ -5,9 +5,9 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProductVersion>10.0.20506</ProductVersion>
     <SchemaVersion>2.0</SchemaVersion>
-    <ProjectGuid>{2806A12F-AC9D-AB7A-CB24-D0E3F7D9481C}</ProjectGuid>
+    <ProjectGuid>{F3FCA2D2-1AA5-67A2-759D-98AFE62DD606}</ProjectGuid>
     <OutputType>Library</OutputType>
-    <AssemblyName>Assembly-CSharp</AssemblyName>
+    <AssemblyName>Unity.Properties</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{E097FAD1-6243-4DAD-9C02-E9B9EFC3FFC1};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
@@ -236,23 +236,56 @@
     <Reference Include="UnityEngine.UI">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/GUISystem/UnityEngine.UI.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEditor.UI">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/GUISystem/Editor/UnityEditor.UI.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.Timeline">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/Timeline/RuntimeEditor/UnityEngine.Timeline.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.Timeline">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/Timeline/Editor/UnityEditor.Timeline.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.Networking">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/Networking/UnityEngine.Networking.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEditor.Networking">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/Networking/Editor/UnityEditor.Networking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.GoogleAudioSpatializer">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/UnityGoogleAudioSpatializer/Editor/UnityEditor.GoogleAudioSpatializer.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.GoogleAudioSpatializer">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/UnityGoogleAudioSpatializer/RuntimeEditor/UnityEngine.GoogleAudioSpatializer.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEditor.SpatialTracking">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/UnitySpatialTracking/Editor/UnityEditor.SpatialTracking.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.SpatialTracking">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/UnitySpatialTracking/RuntimeEditor/UnityEngine.SpatialTracking.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.VR">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/UnityExtensions/Unity/UnityVR/Editor/UnityEditor.VR.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.Graphs">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/Managed/UnityEditor.Graphs.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.Android.Extensions">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.WindowsStandalone.Extensions">
+      <HintPath>C:/Program Files/Unity/Hub/Editor/2018.3.0b7/Editor/Data/PlaybackEngines/windowsstandalonesupport/UnityEditor.WindowsStandalone.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="SyntaxTree.VisualStudio.Unity.Bridge">
+      <HintPath>C:/Program Files (x86)/Microsoft Visual Studio Tools for Unity/15.0/Editor/SyntaxTree.VisualStudio.Unity.Bridge.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json">
       <HintPath>Assets/Plugins/Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="RelayClient">
       <HintPath>Assets/Plugins/RelayClient.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.Advertisements">
+      <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.ads@2.0.8/Editor/UnityEditor.Advertisements.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Analytics.Editor">
       <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.analytics@3.0.9/Unity.Analytics.Editor.dll</HintPath>
@@ -269,8 +302,23 @@
     <Reference Include="System.Runtime.CompilerServices.Unsafe">
       <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.collections@0.0.9-preview.10/System.Runtime.CompilerServices.Unsafe.dll</HintPath>
     </Reference>
+    <Reference Include="Mono.Cecil">
+      <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.properties@0.2.11-preview/Editor/Serialization/External/Cecil/Mono.Cecil.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Mdb">
+      <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.properties@0.2.11-preview/Editor/Serialization/External/Cecil/Mono.Cecil.Mdb.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Pdb">
+      <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.properties@0.2.11-preview/Editor/Serialization/External/Cecil/Mono.Cecil.Pdb.dll</HintPath>
+    </Reference>
+    <Reference Include="Mono.Cecil.Rocks">
+      <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.properties@0.2.11-preview/Editor/Serialization/External/Cecil/Mono.Cecil.Rocks.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.Purchasing">
       <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.purchasing@2.0.1/UnityEngine.Purchasing.dll</HintPath>
+    </Reference>
+    <Reference Include="UnityEditor.Purchasing">
+      <HintPath>D:/github/go-relay-server/relay-client-unity/Library/PackageCache/com.unity.purchasing@2.0.1/Editor/UnityEditor.Purchasing.dll</HintPath>
     </Reference>
     <Reference Include="mscorlib">
       <HintPath>C:\Program Files\Unity\Hub\Editor\2018.3.0b7\Editor\Data\MonoBleedingEdge\lib\mono\4.7.1-api\mscorlib.dll</HintPath>
@@ -628,105 +676,40 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="Unity.Entities.Properties.csproj">
-      <Project>{B5941DC5-1D51-FE34-CDDF-45981B183313}</Project>
-      <Name>Unity.Entities.Properties</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Properties.Codegen.csproj">
-      <Project>{0105463B-3DB8-0A61-D614-4DD344B0385E}</Project>
-      <Name>Unity.Properties.Codegen</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Jobs.csproj">
-      <Project>{D6051BF3-E2A3-0142-74CB-00765F5235F9}</Project>
-      <Name>Unity.Jobs</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Jobs.Editor.csproj">
-      <Project>{6B2DD3A7-D314-1C89-76E3-31717D631C6A}</Project>
-      <Name>Unity.Jobs.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Entities.Editor.csproj">
-      <Project>{34D81709-53D0-37D3-65BB-F93BE4C7AEB0}</Project>
-      <Name>Unity.Entities.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Properties.csproj">
-      <Project>{F3FCA2D2-1AA5-67A2-759D-98AFE62DD606}</Project>
-      <Name>Unity.Properties</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Collections.csproj">
-      <Project>{DFE307E6-8D6D-6FA6-542E-4F295E97B0BE}</Project>
-      <Name>Unity.Collections</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.TextMeshPro.Editor.csproj">
-      <Project>{3A848AB7-9891-EDDA-D555-BF184C2F81F4}</Project>
-      <Name>Unity.TextMeshPro.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Burst.csproj">
-      <Project>{0C74765B-F4CA-7B0F-F53E-9587C807DB59}</Project>
-      <Name>Unity.Burst</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Analytics.Android.Editor.csproj">
-      <Project>{1DAFA655-A0D1-7D0E-9403-558A7B5754C5}</Project>
-      <Name>Unity.Analytics.Android.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.PackageManagerUI.Editor.csproj">
-      <Project>{6877705C-FBD9-0C4F-5AFB-6FB431E5D39D}</Project>
-      <Name>Unity.PackageManagerUI.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Rendering.Hybrid.csproj">
-      <Project>{4B9BF242-9E9C-0986-8CAD-B2BFA7AD0310}</Project>
-      <Name>Unity.Rendering.Hybrid</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.CollabProxy.Editor.csproj">
-      <Project>{C12CEEC6-100C-58A2-DE36-314E4DE5E40B}</Project>
-      <Name>Unity.CollabProxy.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Properties.Editor.csproj">
-      <Project>{25271F86-41E8-805F-14CE-800A03F5DA6B}</Project>
-      <Name>Unity.Properties.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Entities.Hybrid.csproj">
-      <Project>{F3495EEF-3399-E993-14B7-40BBFA1EEA4F}</Project>
-      <Name>Unity.Entities.Hybrid</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Mathematics.csproj">
-      <Project>{CF96849C-7EC5-561A-2E6B-E507ADE81955}</Project>
-      <Name>Unity.Mathematics</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Entities.csproj">
-      <Project>{66FF76BA-6107-3EAA-126A-9CA70E513396}</Project>
-      <Name>Unity.Entities</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Transforms.csproj">
-      <Project>{6401079A-AFFB-A5D8-9FA9-DDE6AE2071A4}</Project>
-      <Name>Unity.Transforms</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Transforms.Editor.csproj">
-      <Project>{3017FD19-77C3-E020-71E6-E743BDFB2F49}</Project>
-      <Name>Unity.Transforms.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Burst.Editor.csproj">
-      <Project>{9C1497B8-C3E3-622E-AE76-6C9406BBD464}</Project>
-      <Name>Unity.Burst.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Mathematics.Editor.csproj">
-      <Project>{6AF95F4B-B8F1-38E0-2772-4BB952A98123}</Project>
-      <Name>Unity.Mathematics.Editor</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.TextMeshPro.csproj">
-      <Project>{07A21C90-D344-AE1A-8456-9910C203B41A}</Project>
-      <Name>Unity.TextMeshPro</Name>
-    </ProjectReference>
-    <ProjectReference Include="Unity.Transforms.Hybrid.csproj">
-      <Project>{5E95F80B-0353-5BF9-557B-12D035CB65DD}</Project>
-      <Name>Unity.Transforms.Hybrid</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="Assets\Scripts\Manager.cs" />
-    <Compile Include="Assets\Scripts\NetworkObject.cs" />
-    <Compile Include="Assets\Scripts\PlayerController\PlayerController.cs" />
-    <Compile Include="Assets\Scripts\PlayerController\PlayerVariables.cs" />
-    <Compile Include="Assets\Scripts\Variables\Variables.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Dictionary\IDictionaryProperty.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\HashSet\HashSetProperty.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\HashSet\IHashSetProperty.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\HashSet\Impl\HashSetPropertyImpl.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\HashSet\PropertyHashSet.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\IProperty.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\IPropertyBag.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\IPropertyContainer.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\IPropertyVisitor.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\IVersionStorage.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\List\IListProperty.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\List\Impl\ListPropertyImpl.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\List\ListProperty.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\List\PropertyList.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Migration\MigrationContainer.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Migration\MigrationList.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\ObjectContainer.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Property.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\PropertyBag.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\PropertyContainerTransfer.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\PropertyContainerVisit.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\PropertyPath.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\PropertyVisitor.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Serialization\Json\Json.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Serialization\Json\JsonPropertyContainerReader.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Serialization\Json\JsonPropertyContainerWriter.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Serialization\Json\JsonPropertyVisitor.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Serialization\Json\JsonSerializer.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Serialization\Json\SimpleJson.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Serialization\StringBuffer.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\TypeConversion.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Value\Impl\ValuePropertyImpl.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Value\IValueProperty.cs" />
+    <Compile Include="Packages\com.unity.properties\Unity.Properties\Value\ValueProperty.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Packages\com.unity.package-manager-ui\Editor\Resources\Styles\Main_Dark.uss" />

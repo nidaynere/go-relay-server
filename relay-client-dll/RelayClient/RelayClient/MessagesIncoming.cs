@@ -67,7 +67,7 @@ namespace RelayClient
                 /// Sender
                 /// </summary>
                 public int s;
-                public string Msg;
+                public byte[] Msg;
             }
         }
     }

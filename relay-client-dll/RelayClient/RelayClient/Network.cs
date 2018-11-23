@@ -108,6 +108,7 @@ namespace RelayClient
             /// </summary>
             public void OnDestroyed()
             {
+                Client.NetworkVariables.Variables.RemoveCallbacks(Id);
                 List.Remove(this);
             }
 
@@ -124,15 +125,17 @@ namespace RelayClient
             {
                 int Index = List.FindIndex(x => x.Id == Id);
                 if (Index != -1)
+                {
                     List[Index] = this; // Replace.
-                else
-                    List.Add(this);
+                    Client.NetworkVariables.Variables.CheckCallbacks(Id);
+                }
+                else List.Add(this);
             }
 
             /// <summary>
             /// Id counter for networked objects;
             /// </summary>
-            public static int IdCounter;
+            public static int IdCounter = 1;
 
             #region Json Variables
             public string p; // AssetName;
@@ -210,6 +213,7 @@ namespace RelayClient
             {
                 Identity New = new Identity(_Asset, _Position, _Angles);
                 New.Id = Identity.IdCounter++;
+                New.objType = Identity.ObjectType.Object;
                 New.netType = Client.NetworkVariables.IsHost ? Identity.NetworkType.Post : Identity.NetworkType.Request;
                 New.Spawn ();
             }
@@ -221,6 +225,9 @@ namespace RelayClient
             /// <param name="_Id">Custom Id</param>
             public static void SpawnPlayer (string _Asset, float[] _Position, float[] _Angles)
             {
+                if (Identity.List.Find(x => x.Id == Client.NetworkVariables.ConnectionId) != null)
+                    return; // Already spawned.
+
                 Identity New = new Identity(_Asset, Client.NetworkVariables.ConnectionId, _Position, _Angles);
                 New.netType = Identity.NetworkType.Post;
                 New.objType = Identity.ObjectType.Player;

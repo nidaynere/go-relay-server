@@ -20,13 +20,19 @@ namespace RelayClient
                 Main.Write(JsonConvert.SerializeObject(new MessagesOutgoing.NetworkMessage(MessagesOutgoing.MessageType.JoinLobby)));
             }
 
+            public static Action Relaying;
             /// <summary>
             /// Relay the message to lobby.
             /// </summary>
             /// <param name="message">Json string</param>
             public static void RelayToLobby(string message)
             {
-                Main.Write(JsonConvert.SerializeObject(new MessagesOutgoing.NetworkMessage(new MessagesOutgoing._RelayToLobby(message))));
+                ASCIIEncoding asen = new ASCIIEncoding();
+                byte[] ba = asen.GetBytes(message);
+                ba = CLZF2.Compress(ba);
+
+                Relaying?.Invoke();
+                Main.Write(JsonConvert.SerializeObject(new MessagesOutgoing.NetworkMessage(new MessagesOutgoing._RelayToLobby(ba))));
             }
 
             /// <summary>

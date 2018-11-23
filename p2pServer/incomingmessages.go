@@ -7,5 +7,5 @@ type IncomingMessage struct {
 } 
 
 type _RelayToLobby struct {
-	Msg string `json:"m,omitempty"` // This will be relayed to lobby. 
+	Msg []byte `json:"m,omitempty"` // This will be relayed to lobby. 
 }

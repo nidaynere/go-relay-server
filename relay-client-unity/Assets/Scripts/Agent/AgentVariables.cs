@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerVariables : Variables
+public class AgentVariables : Variables
 {
     public float MoveSpeed;
 }
